@@ -1,0 +1,29 @@
+{
+    "DS1": {
+        "simulated": true,
+        "pin": 17
+    },
+    "DL": {
+        "simulated": true,
+        "pins": [18, 23, 24],
+        "brightness": 70
+    },
+    "DUS1": {
+        "simulated": true,
+        "trigger_pin": 27,
+        "echo_pin": 22
+    },
+    "DB": {
+        "simulated": true,
+        "pin": 25,
+        "frequency": 1000
+    },
+    "DPIR1": {
+        "simulated": true,
+        "delay": 2
+    },
+    "DMS": {
+        "simulated": true,
+        "delay": 1
+    }
+}
