@@ -1,11 +1,11 @@
 import threading
 
 
-def run_dms_console(settings, stop_event, led_actuator):
+def run_dms_console(settings, stop_event, led_actuator, buzzer_actuator):
     correct_pin = settings.get('pin_code', '1234')
 
-    print("--- DMS Console Active ---")
-    print("Commands: 'dms [code]' (e.g. dms 1234) or 'exit'")
+    print("--- DMS & DB Console Active ---")
+    print("Commands: 'dms [code]', 'db' (doorbell), 'exit'")
 
     while not stop_event.is_set():
         try:
@@ -19,6 +19,13 @@ def run_dms_console(settings, stop_event, led_actuator):
             if command == "exit":
                 stop_event.set()
                 break
+
+            if command == "db":
+                if buzzer_actuator:
+                    # Pokrećemo u novoj niti da ne blokiramo konzolu dok zvoni
+                    threading.Thread(target=buzzer_actuator.ring).start()
+                else:
+                    print("[SYSTEM] Buzzer not connected.")
 
             if command == "dms" and len(user_input) > 1:
                 entered_pin = user_input[1]

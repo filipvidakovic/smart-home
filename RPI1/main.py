@@ -1,6 +1,7 @@
 import threading
 
 from RPI1.components.dms import run_dms_console
+from RPI1.sensors.db import Buzzer
 from settings.settings import load_settings
 from components.ds1 import run_ds1
 from components.dpir1 import run_dpir1
@@ -26,10 +27,11 @@ if __name__ == "__main__":
         dus1_settings = settings['DUS1']
         run_dus1(dus1_settings, threads, stop_event)
 
+        buzzer = Buzzer(settings['DB']['pin']) if 'DB' in settings else None
         if 'DMS1' in settings:
             dms_thread = threading.Thread(
                 target=run_dms_console,
-                args=(settings['DMS1'], stop_event, None)
+                args=(settings['DMS1'], stop_event, None, buzzer)
             )
             dms_thread.daemon = True
             dms_thread.start()
