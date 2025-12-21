@@ -2,12 +2,12 @@ import time
 import RPi.GPIO as GPIO
 
 
-class DS1:
+class DPIR1:
     def __init__(self, pin):
         self.pin = pin
 
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.pin, GPIO.IN)
 
     def read(self):
         return GPIO.input(self.pin) == GPIO.HIGH
@@ -15,19 +15,25 @@ class DS1:
     def cleanup(self):
         GPIO.cleanup(self.pin)
 
-def run_ds1_loop(ds1, callback, stop_event, debounce_ms=200):
+
+def run_dpir1_loop(dpir1, callback, stop_event, debounce_ms=500):
+    """
+    PIR motion sensor loop
+    """
 
     def gpio_callback(channel):
         if stop_event.is_set():
             return
 
-        door_open = ds1.read()
+        motion_detected = dpir1.read()
         timestamp = time.time()
-        callback(door_open, timestamp)
+
+        if motion_detected:
+            callback(motion_detected, timestamp)
 
     GPIO.add_event_detect(
-        ds1.pin,
-        GPIO.BOTH,
+        dpir1.pin,
+        GPIO.RISING,
         callback=gpio_callback,
         bouncetime=debounce_ms
     )
@@ -36,5 +42,5 @@ def run_ds1_loop(ds1, callback, stop_event, debounce_ms=200):
         while not stop_event.is_set():
             time.sleep(0.1)
     finally:
-        GPIO.remove_event_detect(ds1.pin)
-        ds1.cleanup()
+        GPIO.remove_event_detect(dpir1.pin)
+        dpir1.cleanup()
