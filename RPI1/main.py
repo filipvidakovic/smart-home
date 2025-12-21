@@ -1,4 +1,6 @@
 import threading
+
+from RPI1.components.dms import run_dms_console
 from settings.settings import load_settings
 from components.ds1 import run_ds1
 from components.dpir1 import run_dpir1
@@ -23,10 +25,21 @@ if __name__ == "__main__":
         run_dpir1(dpir1_settings, threads, stop_event)
         dus1_settings = settings['DUS1']
         run_dus1(dus1_settings, threads, stop_event)
+
+        if 'DMS1' in settings:
+            dms_thread = threading.Thread(
+                target=run_dms_console,
+                args=(settings['DMS1'], stop_event, None)
+            )
+            dms_thread.daemon = True
+            dms_thread.start()
+            threads.append(dms_thread)
+
         while True:
             time.sleep(1)
 
     except KeyboardInterrupt:
         print('Stopping app')
         for t in threads:
-            stop_event.set()
+            if t != dms_thread:
+                stop_event.set()
