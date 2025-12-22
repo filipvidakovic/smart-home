@@ -19,8 +19,11 @@
         "simulated": true,
         "pin": 24
     },
-    "DMS": {
+    "DMS1": {
         "simulated": true,
-        "delay": 1
+        "delay": 1,
+        "rows": [5, 6, 13, 19],
+        "cols": [12, 16, 20],
+        "pin_code": "1234"
     }
 }
