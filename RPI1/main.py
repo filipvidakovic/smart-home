@@ -1,7 +1,7 @@
 import threading
 
-from RPI1.components.dms import run_dms_console
-from RPI1.sensors.db import Buzzer
+from components.dms import run_dms_console
+from sensors.db import Buzzer
 from settings.settings import load_settings
 from components.ds1 import run_ds1
 from components.dpir1 import run_dpir1
