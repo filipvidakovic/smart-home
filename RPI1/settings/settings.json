@@ -4,6 +4,10 @@
         "pin": 17,
         "led_pin": 23
     },
+    "DL1": {
+        "simulated": true,
+        "pin": 23
+    },
     "DUS1": {
         "simulated": true,
         "trigger_pin": 27,
