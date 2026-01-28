@@ -26,13 +26,15 @@ class DMS(object):
                     while GPIO.input(col_pin) == GPIO.HIGH: # Debounce
                         time.sleep(0.05)
                     GPIO.output(row_pin, GPIO.LOW)
+                    print(self.keypad_map[i][j])
                     return self.keypad_map[i][j]
             GPIO.output(row_pin, GPIO.LOW)
         return None
 
-def run_dms_loop(dms, callback, stop_event):
-    while not stop_event.is_set():
-        key = dms.get_key()
-        if key:
-            callback(key)
-        time.sleep(0.1)
+    def run_dms_loop(dms, callback, stop_event):
+        print("Ulazim u petlju")
+        while not stop_event.is_set():
+            key = dms.get_key()
+            if key:
+                callback(key)
+            time.sleep(0.1)

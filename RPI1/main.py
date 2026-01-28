@@ -36,6 +36,7 @@ if __name__ == "__main__":
 
         buzzer = Buzzer(settings['DB']['pin']) if 'DB' in settings else None
         if 'DMS1' in settings:
+            
             dms_thread = threading.Thread(
                 target=run_dms_console,
                 args=(settings['DMS1'], stop_event, led_bulb, buzzer)
@@ -45,6 +46,9 @@ if __name__ == "__main__":
             threads.append(dms_thread)
 
         while True:
+            led_bulb.on()
+            time.sleep(1)
+            led_bulb.off()
             time.sleep(1)
 
     except KeyboardInterrupt:

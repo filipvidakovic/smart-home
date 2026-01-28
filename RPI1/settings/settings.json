@@ -24,10 +24,10 @@
         "pin": 24
     },
     "DMS1": {
-        "simulated": true,
+        "simulated": false,
         "delay": 1,
-        "rows": [5, 6, 13, 19],
-        "cols": [12, 16, 20],
+        "rows": [25, 8, 7, 1],
+        "cols": [12, 16, 20, 21],
         "pin_code": "1234"
     }
 }
