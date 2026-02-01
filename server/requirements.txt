@@ -1,3 +1,4 @@
+Flask==3.0.0
 paho-mqtt==1.6.1
 influxdb-client==1.36.1
-Flask==2.3.3
+Werkzeug==3.0.1

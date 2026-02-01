@@ -1,16 +1,44 @@
 import time
 import random
+from typing import Callable, Generator, Tuple
 
 
-def generate_distance_events(min_interval=1, max_interval=10, min_dist=10, max_dist=200):
+def generate_distance_events(
+    min_interval: float = 1.0,
+    max_interval: float = 3.0,
+    min_dist: float = 10.0,
+    max_dist: float = 200.0
+) -> Generator[Tuple[float, float], None, None]:
+    current_distance = random.uniform(min_dist, max_dist)
+    
     while True:
-        time.sleep(random.uniform(min_interval, max_interval))
-        yield round(random.uniform(min_dist, max_dist), 2), time.time()
+        change = random.uniform(-20, 20)
+        current_distance += change
+        
+        current_distance = max(min_dist, min(max_dist, current_distance))
+        
+        wait_time = random.uniform(min_interval, max_interval)
+        time.sleep(wait_time)
+        
+        yield round(current_distance, 2), time.time()
 
 
-def run_dus1_simulator(callback, stop_event):
-    for distance, timestamp in generate_distance_events():
-        if stop_event.is_set():
-            break
+def run_dus1_simulator(callback: Callable, stop_event):
 
-        callback(distance, timestamp)
+    print("DUS1 Simulator: Starting distance measurement generation")
+    
+    try:
+        for distance, timestamp in generate_distance_events():
+            if stop_event.is_set():
+                print("DUS1 Simulator: Stop event detected, shutting down")
+                break
+
+            try:
+                callback(distance, timestamp)
+            except Exception as e:
+                print(f"DUS1 Simulator: Error in callback: {e}")
+                
+    except KeyboardInterrupt:
+        print("DUS1 Simulator: Interrupted by user")
+    finally:
+        print("DUS1 Simulator: Stopped")
