@@ -1,38 +1,52 @@
 import threading
-from simulators.dus1 import run_dus1_simulator
-
 import time
+from typing import Callable, Optional
 
-def dus1_callback(distance, timestamp):
+
+def dus1_callback(distance, timestamp, mqtt_publisher=None, settings=None):
+
     t = time.localtime(timestamp)
     print("=" * 20)
     print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
     print(f"Distance: {distance} cm")
+    
+    if mqtt_publisher and settings:
+        mqtt_publisher.add_reading(
+            sensor_type='distance',
+            value=distance,
+            simulated=settings.get('simulated', False)
+        )
 
 
-def run_dus1(settings, threads, stop_event):
+def run_dus1(settings, threads, stop_event, mqtt_publisher=None):
+    def callback_wrapper(distance, timestamp):
+        dus1_callback(distance, timestamp, mqtt_publisher, settings)
+    
     if settings['simulated']:
-        print("Starting dus1 simulator")
+        from simulators.dus1 import run_dus1_simulator
+        print("Starting DUS1 simulator")
         dus1_thread = threading.Thread(
             target=run_dus1_simulator,
-            args=(dus1_callback, stop_event),
+            args=(callback_wrapper, stop_event),
             daemon=True
         )
         dus1_thread.start()
         threads.append(dus1_thread)
-        print("dus1 simulator started")
+        print("DUS1 simulator started")
     else:
         from sensors.dus1 import run_dus1_loop, DUS1
-        print("Starting dus1 loop")
+        print("Starting DUS1 loop")
 
         dus1 = DUS1(
-            settings['trig_pin'],
+            settings['trigger_pin'],
             settings['echo_pin']
         )
 
+        interval = settings.get('read_interval', 1)
+        
         dus1_thread = threading.Thread(
             target=run_dus1_loop,
-            args=(dus1, settings.get('interval', 1), dus1_callback, stop_event),
+            args=(dus1, interval, callback_wrapper, stop_event),
             daemon=True
         )
         dus1_thread.start()

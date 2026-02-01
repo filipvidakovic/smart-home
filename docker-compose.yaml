@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   mqtt5:
-    image: eclipse-mosquitto
+    image: eclipse-mosquitto:2
     container_name: mqtt5
     ports:
       - "1883:1883"
@@ -13,6 +13,25 @@ services:
       - ./log:/mosquitto/log:rw
     networks:
       - iot-network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mosquitto_sub",
+          "-t",
+          "$$SYS/#",
+          "-C",
+          "1",
+          "-i",
+          "healthcheck",
+          "-W",
+          "3",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
   influxdb:
     image: influxdb:2
@@ -31,6 +50,12 @@ services:
     networks:
       - iot-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   grafana:
     image: grafana/grafana:latest
@@ -40,13 +65,13 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_INSTALL_PLUGINS=
     volumes:
       - grafana_data:/var/lib/grafana
     networks:
       - iot-network
     depends_on:
-      - influxdb
+      influxdb:
+        condition: service_healthy
     restart: unless-stopped
 
   flask-server:
@@ -58,10 +83,16 @@ services:
       - "5000:5000"
     environment:
       - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=adminadmin
+      - INFLUXDB_ORG=myorg
+      - INFLUXDB_BUCKET=iot
       - MQTT_BROKER=mqtt5
+      - MQTT_PORT=1883
     depends_on:
-      - mqtt5
-      - influxdb
+      mqtt5:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
     networks:
       - iot-network
     restart: unless-stopped
