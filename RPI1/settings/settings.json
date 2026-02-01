@@ -42,7 +42,7 @@
         "pin": 24
     },
     "DMS1": {
-        "simulated": false,
+        "simulated": true,
         "delay": 1,
         "rows": [25, 8, 7, 1],
         "cols": [12, 16, 20, 21],

@@ -17,3 +17,6 @@ class Buzzer:
             time.sleep(0.2)  # Zvuk traje 0.2s
             if GPIO: GPIO.output(self.pin, GPIO.LOW)
             time.sleep(0.1)  # Pauza 0.1s
+    def cleanup(self):
+        if GPIO:
+            GPIO.cleanup(self.pin)
