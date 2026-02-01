@@ -1,4 +1,22 @@
 {
+    "device": {
+        "pi_id": "PI1",
+        "device_name": "RaspberryPi_Entrance",
+        "location": "Building_A_Floor_1",
+        "description": "Main entrance monitoring device"
+    },
+    "mqtt": {
+        "broker": "localhost",
+        "port": 1883,
+        "client_id": "PI1_client",
+        "topics": {
+            "temperature": "sensors/temperature",
+            "motion": "sensors/motion",
+            "distance": "sensors/distance"
+        },
+    "batch_size": 5,
+    "batch_interval": 10
+    },
     "DS1": {
         "simulated": true,
         "pin": 17,
