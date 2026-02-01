@@ -23,16 +23,7 @@ def ds1_callback(door_open, timestamp, mqtt_publisher=None, settings=None):
         )
 
 def run_ds1(settings, threads, stop_event, mqtt_publisher=None):
-    """
-    Run DS1 door sensor with MQTT publishing support
-    
-    Args:
-        settings: Sensor configuration dictionary
-        threads: List to append created thread
-        stop_event: Threading event for graceful shutdown
-        mqtt_publisher: Optional MQTT publisher instance
-    """
-    # Create callback wrapper that includes mqtt_publisher
+
     def callback_wrapper(door_open, timestamp):
         ds1_callback(door_open, timestamp, mqtt_publisher, settings)
     
