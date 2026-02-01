@@ -8,5 +8,4 @@ def create_led_bulb(settings):
         print("Using real LED bulb")
         return DoorLED(
             pin=settings['pin'],
-            #active_high=settings.get('active_high', True)
         )
