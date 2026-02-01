@@ -1,18 +1,18 @@
 version: "3.9"
 
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbit-iot
+  mqtt5:
+    image: eclipse-mosquitto
+    container_name: mqtt5
     ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      - "1883:1883"
+      - "9001:9001"
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    restart: unless-stopped
+      - ./config:/mosquitto/config:rw
+      - ./data:/mosquitto/data:rw
+      - ./log:/mosquitto/log:rw
+    networks:
+      - iot-network
 
   influxdb:
     image: influxdb:2
@@ -28,8 +28,48 @@ services:
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: adminadmin
     volumes:
       - influxdb_data:/var/lib/influxdb2
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-iot
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - iot-network
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+
+  flask-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: flask-iot-server
+    ports:
+      - "5000:5000"
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - MQTT_BROKER=mqtt5
+    depends_on:
+      - mqtt5
+      - influxdb
+    networks:
+      - iot-network
     restart: unless-stopped
 
 volumes:
-  rabbitmq_data:
   influxdb_data:
+  grafana_data:
+
+networks:
+  iot-network:
+    driver: bridge
