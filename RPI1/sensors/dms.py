@@ -31,10 +31,10 @@ class DMS(object):
             GPIO.output(row_pin, GPIO.LOW)
         return None
 
-    def run_dms_loop(dms, callback, stop_event):
+    def run_dms_loop(self, callback, stop_event):
         print("Ulazim u petlju")
         while not stop_event.is_set():
-            key = dms.get_key()
+            key = self.get_key()
             if key:
                 callback(key)
             time.sleep(0.1)

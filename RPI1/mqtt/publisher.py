@@ -29,13 +29,15 @@ class MQTTPublisher:
             'temperature': [],
             'motion': [],
             'distance': [],
-            'door': []  # DODATO
+            'door': [],
+            'membrane': []
         }
         self.last_send_time = {
             'temperature': time.time(),
             'motion': time.time(),
             'distance': time.time(),
-            'door': time.time()  # DODATO
+            'door': time.time(),
+            'membrane': time.time()
         }
         
     def _on_connect(self, client, userdata, flags, rc):

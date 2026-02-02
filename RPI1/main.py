@@ -2,7 +2,7 @@ import threading
 import time
 import sys
 
-from components.dms import run_dms_console
+from components.dms import run_dms
 from sensors.db import Buzzer
 from settings.settings import load_settings
 from components.ds1 import run_ds1
@@ -102,14 +102,8 @@ if __name__ == "__main__":
             print("+ DUS1 Distance Sensor started")
 
         if 'DMS1' in settings:
-            dms_thread = threading.Thread(
-                target=run_dms_console,
-                args=(settings['DMS1'], stop_event, led_bulb, buzzer)
-            )
-            dms_thread.daemon = True
-            dms_thread.start()
-            threads.append(dms_thread)
-            print("+ DMS Console started")
+            run_dms(settings['DMS1'], threads, stop_event, led_bulb, buzzer, mqtt_publisher)
+            print("+ DMS started")
 
         print("\n" + "="*50)
         print("System running... Press Ctrl+C to stop")
