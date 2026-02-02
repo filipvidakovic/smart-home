@@ -145,7 +145,7 @@ def run_dms(settings, threads, stop_event, led_actuator=None, buzzer_actuator=No
     callback = _keypad_callback_factory(settings, led_actuator, buzzer_actuator, mqtt_publisher)
     
     if settings['simulated']:
-        from simulators.dms import run_dms_simulator
+        from RPI1.simulators.dms import run_dms_simulator
         print("Starting DMS simulator")
         delay = settings.get('delay', 2)
         dms_thread = threading.Thread(
