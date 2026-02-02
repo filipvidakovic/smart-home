@@ -9,6 +9,7 @@ from RPI1.components.ds1 import run_ds1
 from RPI1.components.dpir1 import run_dpir1
 from RPI1.components.dus1 import run_dus1
 from RPI1.components.dl import create_led_bulb
+from RPI1.components.dms import run_dms
 from mqtt.publisher import MQTTPublisher
 
 try:
@@ -102,14 +103,8 @@ if __name__ == "__main__":
             print("+ DUS1 Distance Sensor started")
 
         if 'DMS1' in settings:
-            dms_thread = threading.Thread(
-                target=run_dms_console,
-                args=(settings['DMS1'], stop_event, led_bulb, buzzer)
-            )
-            dms_thread.daemon = True
-            dms_thread.start()
-            threads.append(dms_thread)
-            print("+ DMS Console started")
+            run_dms(settings['DMS1'], threads, stop_event, led_bulb, buzzer, mqtt_publisher)
+            print("+ DMS started")
 
         print("\n" + "="*50)
         print("System running... Press Ctrl+C to stop")

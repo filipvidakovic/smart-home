@@ -12,7 +12,8 @@
         "topics": {
             "temperature": "sensors/temperature",
             "motion": "sensors/motion",
-            "distance": "sensors/distance"
+            "distance": "sensors/distance",
+            "membrane": "sensors/membrane"
         },
     "batch_size": 5,
     "batch_interval": 10
