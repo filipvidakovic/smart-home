@@ -124,8 +124,8 @@ def on_message(client, userdata, msg):
 
 def start_mqtt_client():
     """Start MQTT client with retry logic"""
-    retry_count = 10
-    retry_delay = 3
+    retry_count = 15
+    retry_delay = 2
     
     mqtt_client = mqtt.Client(client_id="flask_iot_server", clean_session=True)
     mqtt_client.on_connect = on_connect
@@ -140,20 +140,13 @@ def start_mqtt_client():
             mqtt_client.loop_forever()
             break  # If loop_forever exits, break the retry loop
             
-        except ConnectionRefusedError:
-            print(f"✗ MQTT: Connection refused (broker not ready yet)")
+        except (ConnectionRefusedError, OSError, Exception) as e:
+            print(f"✗ MQTT: Connection error - {type(e).__name__}: {e}")
             if attempt < retry_count - 1:
-                print(f"MQTT: Retrying in {retry_delay} seconds...")
+                print(f"MQTT: Retrying in {retry_delay} seconds... ({attempt + 1}/{retry_count})")
                 time.sleep(retry_delay)
             else:
-                print("✗ MQTT: All connection attempts failed")
-        except Exception as e:
-            print(f"✗ MQTT: Connection error: {e}")
-            if attempt < retry_count - 1:
-                print(f"MQTT: Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                print("✗ MQTT: All connection attempts failed")
+                print("✗ MQTT: All connection attempts failed after 15 retries")
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -177,7 +170,7 @@ def stats():
         
         # Count records per sensor type
         stats = {}
-        for sensor_type in ['temperature', 'motion', 'distance', 'door']:
+        for sensor_type in ['temperature', 'motion', 'distance', 'door', 'membrane']:
             query = f'''
             from(bucket: "{INFLUXDB_BUCKET}")
                 |> range(start: -24h)
@@ -252,7 +245,7 @@ if __name__ == '__main__':
     mqtt_thread.start()
     
     # Give MQTT client time to connect
-    time.sleep(2)
+    time.sleep(1)
     
     # Start Flask server
     print("\n" + "=" * 60)
