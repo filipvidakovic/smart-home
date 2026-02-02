@@ -28,7 +28,7 @@ def run_ds1(settings, threads, stop_event, mqtt_publisher=None):
         ds1_callback(door_open, timestamp, mqtt_publisher, settings)
     
     if settings['simulated']:
-        from simulators.ds1 import run_ds1_simulator
+        from RPI1.simulators.ds1 import run_ds1_simulator
         print("Starting DS1 simulator")
         ds1_thread = threading.Thread(
             target=run_ds1_simulator,
@@ -39,8 +39,8 @@ def run_ds1(settings, threads, stop_event, mqtt_publisher=None):
         threads.append(ds1_thread)
         print("DS1 simulator started")
     else:
-        from sensors.ds1 import run_ds1_loop, DS1
-        from sensors.dl import DoorLED
+        from RPI1.sensors.ds1 import run_ds1_loop, DS1
+        from RPI1.sensors.dl import DoorLED
         global door_led
         door_led = DoorLED(settings['led_pin'])
         print("Starting DS1 loop")

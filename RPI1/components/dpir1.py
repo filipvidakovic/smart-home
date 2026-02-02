@@ -22,7 +22,7 @@ def run_dpir1(settings, threads, stop_event, mqtt_publisher=None):
         dpir1_callback(motion_detected, timestamp, mqtt_publisher, settings)
     
     if settings['simulated']:
-        from simulators.dpir1 import run_dpir1_simulator
+        from RPI1.simulators.dpir1 import run_dpir1_simulator
         print("Starting DPIR1 simulator")
         dpir1_thread = threading.Thread(
             target=run_dpir1_simulator,
@@ -33,7 +33,7 @@ def run_dpir1(settings, threads, stop_event, mqtt_publisher=None):
         threads.append(dpir1_thread)
         print("DPIR1 simulator started")
     else:
-        from sensors.dpir1 import run_dpir1_loop, DPIR1
+        from RPI1.sensors.dpir1 import run_dpir1_loop, DPIR1
         print("Starting DPIR1 loop")
         dpir1 = DPIR1(settings['pin'])
         dpir1_thread = threading.Thread(

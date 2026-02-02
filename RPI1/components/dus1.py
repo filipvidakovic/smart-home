@@ -23,7 +23,7 @@ def run_dus1(settings, threads, stop_event, mqtt_publisher=None):
         dus1_callback(distance, timestamp, mqtt_publisher, settings)
     
     if settings['simulated']:
-        from simulators.dus1 import run_dus1_simulator
+        from RPI1.simulators.dus1 import run_dus1_simulator
         print("Starting DUS1 simulator")
         dus1_thread = threading.Thread(
             target=run_dus1_simulator,
@@ -34,7 +34,7 @@ def run_dus1(settings, threads, stop_event, mqtt_publisher=None):
         threads.append(dus1_thread)
         print("DUS1 simulator started")
     else:
-        from sensors.dus1 import run_dus1_loop, DUS1
+        from RPI1.sensors.dus1 import run_dus1_loop, DUS1
         print("Starting DUS1 loop")
 
         dus1 = DUS1(

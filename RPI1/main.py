@@ -2,13 +2,13 @@ import threading
 import time
 import sys
 
-from components.dms import run_dms_console
-from sensors.db import Buzzer
-from settings.settings import load_settings
-from components.ds1 import run_ds1
-from components.dpir1 import run_dpir1
-from components.dus1 import run_dus1
-from components.dl import create_led_bulb
+from RPI1.components.dms import run_dms_console
+from RPI1.sensors.db import Buzzer
+from RPI1.settings.settings import load_settings
+from RPI1.components.ds1 import run_ds1
+from RPI1.components.dpir1 import run_dpir1
+from RPI1.components.dus1 import run_dus1
+from RPI1.components.dl import create_led_bulb
 from mqtt.publisher import MQTTPublisher
 
 try:
