@@ -1,15 +1,16 @@
 {
     "device": {
-        "pi_id": "PI1",
-        "device_name": "RaspberryPi_Entrance",
+        "pi_id": "PI2",
+        "device_name": "RaspberryPi_Kitchen",
         "location": "Building_A_Floor_1",
-        "description": "Main entrance monitoring device"
+        "description": "Kitchen monitoring device"
     },
     "mqtt": {
         "broker": "localhost",
         "port": 1883,
-        "client_id": "PI1_client",
+        "client_id": "PI2_client",
         "topics": {
+            "temperature": "sensors/temperature",
             "motion": "sensors/motion",
             "distance": "sensors/distance",
             "membrane": "sensors/membrane",
@@ -18,35 +19,37 @@
     "batch_size": 5,
     "batch_interval": 10
     },
-    "DS1": {
+    "   DS2": {
         "simulated": true,
-        "pin": 17,
-        "led_pin": 23
+        "pin": 5,
+        "led_pin": 6
     },
-    "DL1": {
+    "   DUS2": {
         "simulated": true,
-        "pin": 23
+        "trigger_pin": 7,
+        "echo_pin": 8
     },
-    "DUS1": {
+    "   DPIR2": {
         "simulated": true,
-        "trigger_pin": 27,
-        "echo_pin": 22,
-        "interval": 1
+        "pin": 9
     },
-    "DB": {
+    "   4SD": {
         "simulated": true,
-        "pin": 25,
-        "frequency": 1000
+        "pin": 10
+        //TODO dodaj vise pinova
     },
-    "DPIR1": {
+    "   BTN": {
         "simulated": true,
-        "pin": 24
+        "pin": 11
     },
-    "DMS1": {
+    "   DHT3": {
         "simulated": true,
-        "delay": 1,
-        "rows": [25, 8, 7, 1],
-        "cols": [12, 16, 20, 21],
-        "pin_code": "1234"
+        "pin": 12
+    },
+    "   GSG": {
+        "simulated": true,
+        "pin": 13
     }
+
+
 }

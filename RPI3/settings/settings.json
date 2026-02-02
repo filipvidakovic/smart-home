@@ -1,0 +1,47 @@
+{
+    "device": {
+        "pi_id": "PI3",
+        "device_name": "RaspberryPi_Bedroom",
+        "location": "Building_A_Floor_1",
+        "description": "Bedroom monitoring device"
+    },
+    "mqtt": {
+        "broker": "localhost",
+        "port": 1883,
+        "client_id": "PI3_client",
+        "topics": {
+            "temperature": "sensors/temperature",
+            "motion": "sensors/motion"
+        },
+    "batch_size": 5,
+    "batch_interval": 10
+    },
+
+
+    "DHT1": {
+        "simulated": true,
+        "pin": 1
+    },
+    "DHT2": {
+        "simulated": true,
+        "pin": 2
+    },
+    "IR": {
+        "simulated": true,
+        "pin": 3
+    },
+    "BRGB": {
+        "simulated": true,
+        "pin": 4
+    },
+    "LCD": {
+        "simulated": true,
+        "pin": 5
+    },
+    "DPIR3": {
+        "simulated": true,
+        "pin": 6
+    }
+
+
+}
