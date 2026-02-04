@@ -11,45 +11,58 @@
         "client_id": "PI2_client",
         "topics": {
             "temperature": "sensors/temperature",
+            "humidity": "sensors/humidity",
             "motion": "sensors/motion",
             "distance": "sensors/distance",
-            "membrane": "sensors/membrane",
-            "door_status": "sensors/door_status"
+            "door": "sensors/door",
+            "button": "sensors/button",
+            "accel_x": "sensors/accel_x",
+            "accel_y": "sensors/accel_y",
+            "accel_z": "sensors/accel_z",
+            "gyro_x": "sensors/gyro_x",
+            "gyro_y": "sensors/gyro_y",
+            "gyro_z": "sensors/gyro_z"
         },
-    "batch_size": 5,
-    "batch_interval": 10
+        "batch_size": 5,
+        "batch_interval": 10
     },
-    "   DS2": {
+    "DS2": {
         "simulated": true,
         "pin": 5,
-        "led_pin": 6
+        "sensor_type": "door"
     },
-    "   DUS2": {
+    "DUS2": {
         "simulated": true,
         "trigger_pin": 7,
-        "echo_pin": 8
+        "echo_pin": 8,
+        "read_interval": 1,
+        "sensor_type": "distance"
     },
-    "   DPIR2": {
+    "DPIR2": {
         "simulated": true,
-        "pin": 9
+        "pin": 9,
+        "sensor_type": "motion"
     },
-    "   4SD": {
+    "DHT3": {
         "simulated": true,
-        "pin": 10
-        //TODO dodaj vise pinova
+        "pin": 12,
+        "read_interval": 2,
+        "sensor_type": "temperature"
     },
-    "   BTN": {
+    "SD4": {
         "simulated": true,
-        "pin": 11
+        "clk_pin": 10,
+        "dio_pin": 11
     },
-    "   DHT3": {
+    "BTN": {
         "simulated": true,
-        "pin": 12
+        "pin": 13,
+        "sensor_type": "button"
     },
-    "   GSG": {
+    "GSG": {
         "simulated": true,
-        "pin": 13
+        "i2c_bus": 1,
+        "read_interval": 0.5,
+        "sensor_type": "gyroscope"
     }
-
-
 }

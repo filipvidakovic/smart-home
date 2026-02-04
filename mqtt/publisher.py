@@ -24,20 +24,33 @@ class MQTTPublisher:
         self.stop_event = threading.Event()
         self.daemon_thread = None
         
-        # Batch storage per sensor type - FIKSOVANO: dodato 'door'
         self.batches = {
             'temperature': [],
+            'humidity': [],
             'motion': [],
             'distance': [],
             'door': [],
-            'membrane': []
+            'button': [],
+            'accel_x': [],
+            'accel_y': [],
+            'accel_z': [],
+            'gyro_x': [],
+            'gyro_y': [],
+            'gyro_z': []
         }
         self.last_send_time = {
             'temperature': time.time(),
+            'humidity': time.time(),
             'motion': time.time(),
             'distance': time.time(),
             'door': time.time(),
-            'membrane': time.time()
+            'button': time.time(),
+            'accel_x': time.time(),
+            'accel_y': time.time(),
+            'accel_z': time.time(),
+            'gyro_x': time.time(),
+            'gyro_y': time.time(),
+            'gyro_z': time.time()
         }
         
     def _on_connect(self, client, userdata, flags, rc):
