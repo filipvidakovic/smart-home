@@ -2,14 +2,14 @@ import threading
 import time
 import sys
 
-from RPI1.components.dms import run_dms_console
-from RPI1.sensors.db import Buzzer
-from RPI1.settings.settings import load_settings
-from RPI1.components.ds1 import run_ds1
-from RPI1.components.dpir1 import run_dpir1
-from RPI1.components.dus1 import run_dus1
-from RPI1.components.dl import create_led_bulb
-from RPI1.components.dms import run_dms
+from RPI2.settings.settings import load_settings
+from RPI2.components.ds2 import run_ds2
+from RPI2.components.dpir2 import run_dpir2
+from RPI2.components.dus2 import run_dus2
+from RPI2.components.dht3 import run_dht3
+from RPI2.components.sd4 import run_sd4
+from RPI2.components.btn import run_btn
+from RPI2.components.gsg import run_gsg
 from mqtt.publisher import MQTTPublisher
 
 try:
@@ -21,22 +21,8 @@ except Exception as e:
     print(f"GPIO setup warning: {e}")
 
 
-def cleanup_resources(led_bulb, buzzer, mqtt_publisher):
+def cleanup_resources(mqtt_publisher):
     print("\nCleaning up resources...")
-    
-    if led_bulb:
-        try:
-            led_bulb.cleanup()
-            print("LED cleaned up")
-        except Exception as e:
-            print(f"Error cleaning up LED: {e}")
-    
-    if buzzer:
-        try:
-            buzzer.cleanup()
-            print("Buzzer cleaned up")
-        except Exception as e:
-            print(f"Error cleaning up Buzzer: {e}")
     
     if mqtt_publisher:
         try:
@@ -47,68 +33,74 @@ def cleanup_resources(led_bulb, buzzer, mqtt_publisher):
 
 
 if __name__ == "__main__":
-    print('='*50)
-    print('Starting IoT Device Application')
-    print('='*50)
+    print('='*60)
+    print('🏠 Starting IoT Device Application - PI2 (Kitchen)')
+    print('='*60)
     
     settings = load_settings()
     threads = []
     stop_event = threading.Event()
     
     device_info = settings.get('device', {})
-    print(f"\nDevice Configuration:")
+    print(f"\n📋 Device Configuration:")
     print(f"  PI ID: {device_info.get('pi_id', 'N/A')}")
     print(f"  Device Name: {device_info.get('device_name', 'N/A')}")
     print(f"  Location: {device_info.get('location', 'N/A')}")
     print(f"  Description: {device_info.get('description', 'N/A')}")
     
-    led_bulb = None
-    buzzer = None
     mqtt_publisher = None
-    dms_thread = None
     
     try:
-        print("\nInitializing MQTT Publisher...")
+        # Initialize MQTT
+        print("\n📡 Initializing MQTT Publisher...")
         mqtt_publisher = MQTTPublisher(settings)
         if mqtt_publisher.connect():
             mqtt_publisher.start_daemon()
-            print("+ MQTT Publisher ready")
+            print("✓ MQTT Publisher ready")
         else:
-            print("- MQTT connection failed, continuing without MQTT")
+            print("✗ MQTT connection failed, continuing without MQTT")
             mqtt_publisher = None
+
+        print("\n🔌 Starting Sensors...")
         
-        print("\nInitializing LED...")
-        if 'DL1' in settings:
-            led_bulb = create_led_bulb(settings['DL1'])
-            led_bulb.on()
-            time.sleep(0.5)
-            led_bulb.off()
-            print("+ LED initialized")
+        # Door Sensor
+        if 'DS2' in settings:
+            run_ds2(settings['DS2'], threads, stop_event, mqtt_publisher)
+            print("+ DS2 Door Sensor started")
+
+        # Motion Sensor
+        if 'DPIR2' in settings:
+            run_dpir2(settings['DPIR2'], threads, stop_event, mqtt_publisher)
+            print("+ DPIR2 Motion Sensor started")
+
+        # Distance Sensor
+        if 'DUS2' in settings:
+            run_dus2(settings['DUS2'], threads, stop_event, mqtt_publisher)
+            print("+ DUS2 Ultrasonic Distance Sensor started")
         
-        if 'DB' in settings:
-            buzzer = Buzzer(settings['DB']['pin'])
-            print("+ Buzzer initialized")
+        # Temperature & Humidity Sensor
+        if 'DHT3' in settings:
+            run_dht3(settings['DHT3'], threads, stop_event, mqtt_publisher)
+            print("+ DHT3 Temperature & Humidity Sensor started")
+        
+        # 7-Segment Display Timer
+        if 'SD4' in settings:
+            run_sd4(settings['SD4'], threads, stop_event)
+            print("+ SD4 7-Segment Display Timer started")
+        
+        # Button
+        if 'BTN' in settings:
+            run_btn(settings['BTN'], threads, stop_event, mqtt_publisher)
+            print("+ BTN Kitchen Button started")
+        
+        # Gyroscope
+        if 'GSG' in settings:
+            run_gsg(settings['GSG'], threads, stop_event, mqtt_publisher)
+            print("+ GSG Gyroscope & Accelerometer started")
 
-        print("\nStarting Sensors...")
-        if 'DS1' in settings:
-            run_ds1(settings['DS1'], threads, stop_event, mqtt_publisher)
-            print("+ DS1 Door Sensor started")
-
-        if 'DPIR1' in settings:
-            run_dpir1(settings['DPIR1'], threads, stop_event, mqtt_publisher)
-            print("+ DPIR1 Motion Sensor started")
-
-        if 'DUS1' in settings:
-            run_dus1(settings['DUS1'], threads, stop_event, mqtt_publisher)
-            print("+ DUS1 Distance Sensor started")
-
-        if 'DMS1' in settings:
-            run_dms(settings['DMS1'], threads, stop_event, led_bulb, buzzer, mqtt_publisher)
-            print("+ DMS started")
-
-        print("\n" + "="*50)
+        print("\n" + "="*60)
         print("System running... Press Ctrl+C to stop")
-        print("="*50 + "\n")
+        print("="*60 + "\n")
         
         heartbeat_counter = 0
         while True:
@@ -116,26 +108,26 @@ if __name__ == "__main__":
             
             heartbeat_counter += 1
             if heartbeat_counter % 30 == 0:
-                print(f"[Heartbeat] System running for {heartbeat_counter * 2} seconds...")
+                print(f"💓 [Heartbeat] System running for {heartbeat_counter * 2} seconds...")
     
     except KeyboardInterrupt:
-        print('\n\nReceived shutdown signal (Ctrl+C)')
+        print('\n\n  Received shutdown signal (Ctrl+C)')
     except Exception as e:
-        print(f'\n\nUnexpected error: {e}')
+        print(f'\n\n Unexpected error: {e}')
         import traceback
         traceback.print_exc()
     finally:
-        print("\nInitiating shutdown sequence...")
+        print("\n Initiating shutdown sequence...")
         stop_event.set()
         
-        print("Waiting for threads to finish...")
+        print("⏳ Waiting for threads to finish...")
         for thread in threads:
             if thread.is_alive():
                 thread.join(timeout=2.0)
         
-        cleanup_resources(led_bulb, buzzer, mqtt_publisher)
+        cleanup_resources(mqtt_publisher)
         
-        print("\n" + "="*50)
+        print("\n" + "="*60)
         print("Application stopped successfully")
-        print("="*50)
+        print("="*60)
         sys.exit(0)
