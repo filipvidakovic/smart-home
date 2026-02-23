@@ -44,14 +44,14 @@ def run_dht3(settings, threads, stop_event, mqtt_publisher=None):
         threads.append(dht3_thread)
         print("DHT3 simulator started")
     else:
-        from RPI2.sensors.dht3 import run_dht3_loop, DHT3
+        from RPI2.sensors.dht3 import run_dht_loop, DHT
         print("Starting DHT3 loop")
 
-        dht3 = DHT3(settings['pin'])
+        dht3 = DHT(settings['pin'])
         interval = settings.get('read_interval', 2)
         
         dht3_thread = threading.Thread(
-            target=run_dht3_loop,
+            target=run_dht_loop,
             args=(dht3, interval, callback_wrapper, stop_event),
             daemon=True
         )

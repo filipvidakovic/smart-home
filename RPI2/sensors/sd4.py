@@ -1,13 +1,15 @@
 import time
 import threading
 from typing import Optional
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
 
-try:
-    import tm1637
-    TM1637_AVAILABLE = True
-except ImportError:
-    TM1637_AVAILABLE = False
-    print("Warning: tm1637 library not available")
+# try:
+#     import tm1637
+#     TM1637_AVAILABLE = True
+# except ImportError:
+#     TM1637_AVAILABLE = False
+#     print("Warning: tm1637 library not available")
 
 
 class SD4:
@@ -16,12 +18,10 @@ class SD4:
         self.clk_pin = clk_pin
         self.dio_pin = dio_pin
         self.lock = threading.Lock()
-        
-        if not TM1637_AVAILABLE:
-            raise ImportError("tm1637 library is required for 7-segment display")
-        
-        self.display = tm1637.TM1637(clk=self.clk_pin, dio=self.dio_pin)
-        self.display.brightness(7)  # Max brightness (0-7)
+        self.segments =  (11,4,23,8,7,10,18,25)
+        for segment in self.segments:
+            GPIO.setup(segment, GPIO.OUT)
+            GPIO.output(segment, 0)
         
         print(f"SD4: Initialized (CLK={self.clk_pin}, DIO={self.dio_pin})")
 

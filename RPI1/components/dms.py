@@ -12,9 +12,9 @@ def _activate_led(led_actuator, seconds=3):
 
 def _handle_pin_entry(entered_pin, correct_pin, led_actuator, buzzer_actuator):
     if entered_pin == correct_pin:
-        print("\n" + "=" * 20)
-        print(">>> ACCESS GRANTED")
-        print("=" * 20 + "\n")
+        #print("\n" + "=" * 20)
+        #print(">>> ACCESS GRANTED")
+        #print("=" * 20 + "\n")
         if led_actuator:
             threading.Thread(
                 target=_activate_led,
@@ -22,9 +22,9 @@ def _handle_pin_entry(entered_pin, correct_pin, led_actuator, buzzer_actuator):
                 daemon=True
             ).start()
     else:
-        print("\n" + "x" * 20)
-        print(">>> INVALID PASSWORD")
-        print("x" * 20 + "\n")
+        #print("\n" + "x" * 20)
+        #print(">>> INVALID PASSWORD")
+        #print("x" * 20 + "\n")
         if buzzer_actuator:
             threading.Thread(
                 target=buzzer_actuator.ring,
@@ -54,13 +54,13 @@ def _keypad_callback_factory(settings, led_actuator, buzzer_actuator, mqtt_publi
             )
         
         t = time.localtime(timestamp if timestamp else time.time())
-        print("=" * 20)
-        print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
-        print(f"Membrane key pressed: {key}")
+        #print("=" * 20)
+        #print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
+        #print(f"Membrane key pressed: {key}")
         
         if key == '*':
             pin_buffer["value"] = ""
-            print("[DMS] PIN cleared")
+            #print("[DMS] PIN cleared")
             return
         if key == '#':
             _handle_pin_entry(
@@ -72,20 +72,20 @@ def _keypad_callback_factory(settings, led_actuator, buzzer_actuator, mqtt_publi
             pin_buffer["value"] = ""
             return
         pin_buffer["value"] += key
-        print(f"[DMS] PIN: {'*' * len(pin_buffer['value'])}")
+        #print(f"[DMS] PIN: {'*' * len(pin_buffer['value'])}")
 
     return callback
 
 
 def run_dms_console(settings, stop_event, led_actuator, buzzer_actuator, mqtt_publisher=None):
     correct_pin = settings.get('pin_code', '1234')
-    print("--- DMS & DB Console Active ---")
-    print("Commands:")
-    print("  dms [code]  -> unlock (LED on for 3s)")
-    print("  db          -> doorbell")
-    print("  led_on      -> LED bulb ON")
-    print("  led_off     -> LED bulb OFF")
-    print("  exit")
+    #print("--- DMS & DB Console Active ---")
+    #print("Commands:")
+    #print("  dms [code]  -> unlock (LED on for 3s)")
+    #print("  db          -> doorbell")
+    #print("  led_on      -> LED bulb ON")
+    #print("  led_off     -> LED bulb OFF")
+    #print("  exit")
 
     while not stop_event.is_set():
         try:
@@ -146,7 +146,7 @@ def run_dms(settings, threads, stop_event, led_actuator=None, buzzer_actuator=No
     
     if settings['simulated']:
         from RPI1.simulators.dms import run_dms_simulator
-        print("Starting DMS simulator")
+        #print("Starting DMS simulator")
         delay = settings.get('delay', 2)
         dms_thread = threading.Thread(
             target=run_dms_simulator,
@@ -155,7 +155,7 @@ def run_dms(settings, threads, stop_event, led_actuator=None, buzzer_actuator=No
         )
         dms_thread.start()
         threads.append(dms_thread)
-        print("DMS simulator started")
+        #print("DMS simulator started")
         
         # Also start console for manual commands
         console_thread = threading.Thread(
@@ -166,9 +166,9 @@ def run_dms(settings, threads, stop_event, led_actuator=None, buzzer_actuator=No
         console_thread.start()
         threads.append(console_thread)
     else:
-        from sensors.dms import DMS
+        from RPI1.sensors.dms import DMS
         dms = DMS(settings['rows'], settings['cols'])
-        print("Starting DMS keypad loop")
+        ##print("Starting DMS keypad loop")
         dms_thread = threading.Thread(
             target=dms.run_dms_loop,
             args=(callback, stop_event),
@@ -176,4 +176,4 @@ def run_dms(settings, threads, stop_event, led_actuator=None, buzzer_actuator=No
         )
         dms_thread.start()
         threads.append(dms_thread)
-        print("DMS keypad loop started")
+        #print("DMS keypad loop started")
