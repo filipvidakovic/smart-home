@@ -2,18 +2,15 @@ import threading
 import time
 from typing import Callable, Optional
 
-door_led = None
 
 def ds2_callback(door_open, timestamp, mqtt_publisher=None, settings=None):
-    global door_led
+
     t = time.localtime(timestamp)
-    print("="*20)
+    print("=" * 20)
     print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
-    print(f"Door Open: {'Yes' if door_open else 'No'}")
-    print(f"LED bulb: {'On' if door_open else 'Off'}")
+    print(f"Kitchen Door: {'Open' if door_open else 'Closed'}")
     
-    if door_led:
-        door_led.set_state(door_open)
+    #TODO Update system state
     
     if mqtt_publisher and settings:
         mqtt_publisher.add_reading(
@@ -29,7 +26,7 @@ def run_ds2(settings, threads, stop_event, mqtt_publisher=None):
     
     if settings['simulated']:
         from RPI2.simulators.ds2 import run_ds2_simulator
-        print("Starting ds2 simulator")
+        print("Starting DS2 simulator")
         ds2_thread = threading.Thread(
             target=run_ds2_simulator,
             args=(callback_wrapper, stop_event),
@@ -37,14 +34,11 @@ def run_ds2(settings, threads, stop_event, mqtt_publisher=None):
         )
         ds2_thread.start()
         threads.append(ds2_thread)
-        print("ds2 simulator started")
+        print("DS2 simulator started")
     else:
-        from RPI2.sensors.ds2 import run_ds2_loop, ds2
-        from RPI2.sensors.dl import DoorLED
-        global door_led
-        door_led = DoorLED(settings['led_pin'])
-        print("Starting ds2 loop")
-        ds2 = ds2(settings['pin'])
+        from RPI2.sensors.ds2 import run_ds2_loop, DS2
+        print("Starting DS2 loop")
+        ds2 = DS2(settings['pin'])
         ds2_thread = threading.Thread(
             target=run_ds2_loop,
             args=(ds2, callback_wrapper, stop_event),
@@ -52,4 +46,4 @@ def run_ds2(settings, threads, stop_event, mqtt_publisher=None):
         )
         ds2_thread.start()
         threads.append(ds2_thread)
-        print("ds2 loop started")
+        print("DS2 loop started")

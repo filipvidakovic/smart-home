@@ -3,7 +3,7 @@ import time
 from typing import Callable, Optional
 
 def dpir1_callback(motion_detected, timestamp, mqtt_publisher=None, settings=None):
-
+    
     t = time.localtime(timestamp)
     print("=" * 20)
     print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
@@ -17,7 +17,7 @@ def dpir1_callback(motion_detected, timestamp, mqtt_publisher=None, settings=Non
         )
 
 
-def run_dpir1(settings, threads, stop_event, mqtt_publisher=None):
+def run_dpir1(settings, threads, stop_event, mqtt_publisher=None, led_controller=None):
     def callback_wrapper(motion_detected, timestamp):
         dpir1_callback(motion_detected, timestamp, mqtt_publisher, settings)
     

@@ -2,3 +2,4 @@ Flask==3.0.0
 paho-mqtt==1.6.1
 influxdb-client==1.36.1
 Werkzeug==3.0.1
+flask-cors==3.0.10

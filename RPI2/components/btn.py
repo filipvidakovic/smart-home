@@ -4,15 +4,18 @@ from typing import Callable
 
 
 def btn_callback(timestamp, mqtt_publisher=None, settings=None):
+
     t = time.localtime(timestamp)
     print("=" * 20)
     print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
     print("Kitchen Button Pressed!")
     
+    #Update system state
+    
     if mqtt_publisher and settings:
         mqtt_publisher.add_reading(
             sensor_type='button',
-            value=1, 
+            value=1,
             simulated=settings.get('simulated', False)
         )
 

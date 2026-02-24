@@ -8,7 +8,9 @@ def dus2_callback(distance, timestamp, mqtt_publisher=None, settings=None):
     t = time.localtime(timestamp)
     print("=" * 20)
     print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
-    print(f"Distance: {distance} cm")
+    print(f"Kitchen Distance: {distance} cm")
+
+    #Update system state
     
     if mqtt_publisher and settings:
         mqtt_publisher.add_reading(
@@ -21,7 +23,7 @@ def dus2_callback(distance, timestamp, mqtt_publisher=None, settings=None):
 def run_dus2(settings, threads, stop_event, mqtt_publisher=None):
     def callback_wrapper(distance, timestamp):
         dus2_callback(distance, timestamp, mqtt_publisher, settings)
-    
+
     if settings['simulated']:
         from RPI2.simulators.dus2 import run_dus2_simulator
         print("Starting DUS2 simulator")

@@ -11,39 +11,16 @@ def gsg_callback(acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z, timestamp,
     print(f"Accel: X={acc_x:6.3f}g Y={acc_y:6.3f}g Z={acc_z:6.3f}g")
     print(f"Gyro:  X={gyro_x:6.2f}° Y={gyro_y:6.2f}° Z={gyro_z:6.2f}°")
     
+    #Update system state
+    
     if mqtt_publisher and settings:
-        # Send accelerometer data
-        mqtt_publisher.add_reading(
-            sensor_type='accel_x',
-            value=acc_x,
-            simulated=settings.get('simulated', False)
-        )
-        mqtt_publisher.add_reading(
-            sensor_type='accel_y',
-            value=acc_y,
-            simulated=settings.get('simulated', False)
-        )
-        mqtt_publisher.add_reading(
-            sensor_type='accel_z',
-            value=acc_z,
-            simulated=settings.get('simulated', False)
-        )
-        
-        mqtt_publisher.add_reading(
-            sensor_type='gyro_x',
-            value=gyro_x,
-            simulated=settings.get('simulated', False)
-        )
-        mqtt_publisher.add_reading(
-            sensor_type='gyro_y',
-            value=gyro_y,
-            simulated=settings.get('simulated', False)
-        )
-        mqtt_publisher.add_reading(
-            sensor_type='gyro_z',
-            value=gyro_z,
-            simulated=settings.get('simulated', False)
-        )
+        for axis, value in [('accel_x', acc_x), ('accel_y', acc_y), ('accel_z', acc_z),
+                            ('gyro_x', gyro_x), ('gyro_y', gyro_y), ('gyro_z', gyro_z)]:
+            mqtt_publisher.add_reading(
+                sensor_type=axis,
+                value=value,
+                simulated=settings.get('simulated', False)
+            )
 
 
 def run_gsg(settings, threads, stop_event, mqtt_publisher=None):

@@ -4,16 +4,19 @@ from typing import Callable, Optional
 
 door_led = None
 
+
 def ds1_callback(door_open, timestamp, mqtt_publisher=None, settings=None):
     global door_led
+    
     t = time.localtime(timestamp)
-    print("="*20)
+    print("=" * 20)
     print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
     print(f"Door Open: {'Yes' if door_open else 'No'}")
-    print(f"LED bulb: {'On' if door_open else 'Off'}")
     
     if door_led:
         door_led.set_state(door_open)
+    
+    #TODO Update system state
     
     if mqtt_publisher and settings:
         mqtt_publisher.add_reading(
@@ -21,6 +24,7 @@ def ds1_callback(door_open, timestamp, mqtt_publisher=None, settings=None):
             value=1 if door_open else 0,
             simulated=settings.get('simulated', False)
         )
+
 
 def run_ds1(settings, threads, stop_event, mqtt_publisher=None):
 

@@ -3,21 +3,20 @@ import time
 from typing import Callable, Optional
 
 def dpir2_callback(motion_detected, timestamp, mqtt_publisher=None, settings=None):
-
     t = time.localtime(timestamp)
     print("=" * 20)
     print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
-    print("Motion detected near the door")
+    print("Motion detected in kitchen")
     
     if mqtt_publisher and settings:
         mqtt_publisher.add_reading(
             sensor_type='motion',
-            value=2 if motion_detected else 0,
+            value=1 if motion_detected else 0,
             simulated=settings.get('simulated', False)
         )
 
 
-def run_dpir2(settings, threads, stop_event, mqtt_publisher=None):
+def run_dpir2(settings, threads, stop_event, mqtt_publisher=None): 
     def callback_wrapper(motion_detected, timestamp):
         dpir2_callback(motion_detected, timestamp, mqtt_publisher, settings)
     

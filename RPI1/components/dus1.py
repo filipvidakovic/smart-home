@@ -1,14 +1,14 @@
 import threading
 import time
 from typing import Callable, Optional
-
-
 def dus1_callback(distance, timestamp, mqtt_publisher=None, settings=None):
-
+    """Callback for ultrasonic distance sensor readings"""
     t = time.localtime(timestamp)
-    # print("=" * 20)
-    # print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
-    # print(f"Distance: {distance} cm")
+    print("=" * 20)
+    print(f"Timestamp: {time.strftime('%H:%M:%S', t)}")
+    print(f"Distance: {distance} cm")
+    
+
     
     if mqtt_publisher and settings:
         mqtt_publisher.add_reading(
@@ -42,7 +42,7 @@ def run_dus1(settings, threads, stop_event, mqtt_publisher=None):
             settings['echo_pin']
         )
 
-        interval = settings.get('interval', 1)
+        interval = settings.get('read_interval', 1)
         
         dus1_thread = threading.Thread(
             target=run_dus1_loop,

@@ -28,7 +28,7 @@
         "pin": 23
     },
     "DUS1": {
-        "simulated": false,
+        "simulated": true,
         "trigger_pin": 27,
         "echo_pin": 22,
         "interval": 1
