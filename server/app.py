@@ -212,9 +212,11 @@ def send_command(device_id, command, data=None):
         topic = f"commands/{device_id}/{command}"
         payload = json.dumps(data or {})
         command_mqtt_client.publish(topic, payload, qos=1)
-        print(f"📤 Command sent: {topic}")
+        print(f"SERVER: Published to {topic} - {payload}")
         return True
-    return False
+    else:
+        print(f"SERVER: Cannot send command - MQTT client not initialized")
+        return False
 
 
 # ==================== STATE MONITORING ====================
@@ -242,6 +244,30 @@ def monitor_system_state():
             print(f"Error in monitor: {e}")
             time.sleep(5)
 
+def timer_countdown_thread():
+    """Background thread to manage timer countdown on server"""
+    print("⏱️  Timer countdown thread started")
+    
+    while True:
+        try:
+            # Check if timer is running and update
+            remaining = system_state.get_timer_remaining()
+            
+            # If timer expired, notify PI2
+            if system_state.timer_expired and system_state.timer_blinking:
+                if command_mqtt_client:
+                    command_mqtt_client.publish(
+                        "commands/PI2/timer_expired",
+                        json.dumps({})
+                    )
+                    # Reset flag so we don't spam
+                    system_state.timer_expired = False
+            
+            time.sleep(1)
+            
+        except Exception as e:
+            print(f"Timer thread error: {e}")
+            time.sleep(5)
 
 # ==================== API ENDPOINTS ====================
 
@@ -428,6 +454,9 @@ if __name__ == '__main__':
     monitor_thread = threading.Thread(target=monitor_system_state, daemon=True)
     monitor_thread.start()
     
+    timer_thread = threading.Thread(target=timer_countdown_thread, daemon=True)
+    timer_thread.start()
+
     time.sleep(2)
     
     print("\n🚀 Server starting on port 5000...")

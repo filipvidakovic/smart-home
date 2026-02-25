@@ -52,7 +52,9 @@
     "SD4": {
         "simulated": true,
         "clk_pin": 10,
-        "dio_pin": 11
+        "dio_pin": 11,
+        "mqtt_broker": "localhost",
+        "mqtt_port": 1883
     },
     "BTN": {
         "simulated": true,

@@ -1,6 +1,8 @@
 import threading
 import time
 import sys
+import paho.mqtt.client as mqtt
+import json
 
 from RPI1.components.dms import run_dms_console
 from RPI1.sensors.db import Buzzer
@@ -10,56 +12,74 @@ from RPI1.components.dpir1 import run_dpir1
 from RPI1.components.dus1 import run_dus1
 from RPI1.components.dl import create_led_bulb
 from mqtt.publisher import MQTTPublisher
-from shared.mqtt_state_publisher import MQTTStatePublisher
-from shared.mqtt_command_listener import MQTTCommandListener
 
 try:
     import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BCM)
 except ImportError:
     print("RPi.GPIO not available, running in simulation mode")
-except Exception as e:
-    print(f"GPIO setup warning: {e}")
 
 
-def cleanup_resources(led_bulb, buzzer, mqtt_publisher, state_publisher, command_listener):
-    """Cleanup all resources"""
+# Simple command listener for PI1
+command_mqtt_client = None
+
+def on_connect_commands(client, userdata, flags, rc):
+    if rc == 0:
+        # PI1 ONLY subscribes to PI1 commands and "all" broadcasts
+        client.subscribe("commands/PI1/#")
+        client.subscribe("commands/all/#")
+        print("✓ PI1: Subscribed to commands/PI1/# and commands/all/#")
+
+def on_message_commands(client, userdata, msg):
+    try:
+        topic = msg.topic
+        payload = json.loads(msg.payload.decode())
+        
+        print(f"PI1 Command received: {topic}")
+        
+        # Handle security commands
+        if "security_armed" in topic or "alarm_cleared" in topic:
+            print(f"✓ PI1: Processed {topic}")
+        
+    except Exception as e:
+        print(f"PI1: Error processing command - {e}")
+
+def start_command_listener_pi1():
+    global command_mqtt_client
+    command_mqtt_client = mqtt.Client(client_id="PI1_command_listener")
+    command_mqtt_client.on_connect = on_connect_commands
+    command_mqtt_client.on_message = on_message_commands
+    command_mqtt_client.connect("localhost", 1883, 60)
+    command_mqtt_client.loop_start()
+
+
+def cleanup_resources(led_bulb, buzzer, mqtt_publisher):
     print("\nCleaning up resources...")
     
     if led_bulb:
         try:
             led_bulb.cleanup()
-            print("LED cleaned up")
         except Exception as e:
             print(f"Error cleaning up LED: {e}")
     
     if buzzer:
         try:
             buzzer.cleanup()
-            print("Buzzer cleaned up")
         except Exception as e:
             print(f"Error cleaning up Buzzer: {e}")
     
     if mqtt_publisher:
         try:
             mqtt_publisher.disconnect()
-            print("MQTT disconnected")
         except Exception as e:
             print(f"Error disconnecting MQTT: {e}")
     
-    if state_publisher:
+    if command_mqtt_client:
         try:
-            state_publisher.disconnect()
-            print("State publisher disconnected")
-        except Exception as e:
-            print(f"Error disconnecting state publisher: {e}")
-    
-    if command_listener:
-        try:
-            command_listener.disconnect()
-            print("Command listener disconnected")
-        except Exception as e:
-            print(f"Error disconnecting command listener: {e}")
+            command_mqtt_client.loop_stop()
+            command_mqtt_client.disconnect()
+        except:
+            pass
 
 
 if __name__ == "__main__":
@@ -80,36 +100,12 @@ if __name__ == "__main__":
     led_bulb = None
     buzzer = None
     mqtt_publisher = None
-    state_publisher = None
-    command_listener = None
     dms_thread = None
     
     try:
-        # Initialize MQTT State Publisher
-        print("\n📡 Initializing MQTT State Publisher...")
-        state_publisher = MQTTStatePublisher(
-            broker=settings['mqtt']['broker'],
-            port=settings['mqtt']['port']
-        )
-        if state_publisher.connect():
-            print("State Publisher ready")
-        else:
-            print("State Publisher failed")
-            state_publisher = None
-        
-        # Initialize MQTT Command Listener
-        print("\nInitializing MQTT Command Listener...")
-        command_listener = MQTTCommandListener(
-            broker=settings['mqtt']['broker'],
-            port=settings['mqtt']['port'],
-            device_id=device_info.get('pi_id', 'PI1')
-        )
-        
-        if command_listener.connect():
-            print("✓ Command Listener ready")
-        else:
-            print("✗ Command Listener failed")
-            command_listener = None
+        # Start PI1 command listener
+        print("\n📥 Starting PI1 Command Listener...")
+        start_command_listener_pi1()
         
         # Initialize MQTT Publisher for sensor data
         print("\n📡 Initializing MQTT Data Publisher...")
@@ -135,46 +131,36 @@ if __name__ == "__main__":
             buzzer = Buzzer(settings['DB']['pin'])
             print("✓ Buzzer initialized")
         
-        # Start Alarm Monitor
-        print("\n🚨 Starting Alarm Monitor...")
-        alarm_thread = threading.Thread(
-            #TODO Manage alarm
-            target=lambda print_func, stop_evt: print_func("Alarm monitor running (no buzzer on PI1)"),
-            args=(print, stop_event),
-            daemon=True
-        )
-        alarm_thread.start()
-        threads.append(alarm_thread)
-        print("✓ Alarm monitor started")
-        
-        # Start Sensors
         print("\n🔌 Starting Sensors...")
         
+        # Distance Sensor (for motion direction)
         if 'DUS1' in settings:
             run_dus1(settings['DUS1'], threads, stop_event, mqtt_publisher)
             print("✓ DUS1 Distance Sensor started")
         
+        # Motion Sensor
         if 'DPIR1' in settings:
             run_dpir1(settings['DPIR1'], threads, stop_event, mqtt_publisher, led_bulb)
-            print("✓ DPIR1 Motion Sensor started (with LED integration)")
+            print("✓ DPIR1 Motion Sensor started")
         
+        # Door Sensor
         if 'DS1' in settings:
             run_ds1(settings['DS1'], threads, stop_event, mqtt_publisher)
             print("✓ DS1 Door Sensor started")
         
-        # Start DMS Console
-        if 'DMS1' in settings:
-            dms_thread = threading.Thread(
-                target=run_dms_console,
-                args=(settings['DMS1'], stop_event, led_bulb, buzzer)
-            )
-            dms_thread.daemon = True
-            dms_thread.start()
-            threads.append(dms_thread)
-            print("✓ DMS Console started")
+        # Start DMS Console (optional)
+        # if 'DMS1' in settings:
+        #     dms_thread = threading.Thread(
+        #         target=run_dms_console,
+        #         args=(settings['DMS1'], stop_event, led_bulb, buzzer)
+        #     )
+        #     dms_thread.daemon = True
+        #     dms_thread.start()
+        #     threads.append(dms_thread)
+        #     print("✓ DMS Console started")
         
         print("\n" + "="*60)
-        print("✅ System running... Press Ctrl+C to stop")
+        print("✅ PI1 System running... Press Ctrl+C to stop")
         print("="*60 + "\n")
         
         heartbeat_counter = 0
@@ -183,29 +169,26 @@ if __name__ == "__main__":
             
             heartbeat_counter += 1
             if heartbeat_counter % 30 == 0:
-                print(f"💓 [Heartbeat] Running: {heartbeat_counter * 2}s | "
-                      #f"People: {system_state.people_count} | "
-                      #f"Alarm: {'ACTIVE' if system_state.alarm_active else 'Clear'}"
-                      )
+                print(f"💓 [PI1 Heartbeat] Running: {heartbeat_counter * 2}s")
     
     except KeyboardInterrupt:
-        print('\n\n Received shutdown signal (Ctrl+C)')
+        print('\n\n⚠️  Received shutdown signal (Ctrl+C)')
     except Exception as e:
-        print(f'\n\nUnexpected error: {e}')
+        print(f'\n\n❌ Unexpected error: {e}')
         import traceback
         traceback.print_exc()
     finally:
-        print("\nInitiating shutdown sequence...")
+        print("\n🛑 Initiating shutdown sequence...")
         stop_event.set()
         
-        print("Waiting for threads to finish...")
+        print("⏳ Waiting for threads to finish...")
         for thread in threads:
             if thread.is_alive():
                 thread.join(timeout=2.0)
         
-        cleanup_resources(led_bulb, buzzer, mqtt_publisher, state_publisher, command_listener)
+        cleanup_resources(led_bulb, buzzer, mqtt_publisher)
         
         print("\n" + "="*60)
-        print("Application stopped successfully")
+        print("✅ PI1 Application stopped successfully")
         print("="*60)
         sys.exit(0)

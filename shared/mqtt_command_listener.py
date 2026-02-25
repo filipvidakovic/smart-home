@@ -31,7 +31,7 @@ class MQTTCommandListener:
             print("✓ Command Listener: Subscribed to commands/#")
         else:
             self.connected = False
-            print(f"✗ Command Listener: Connection failed (code {rc})")
+            print(f"Command Listener: Connection failed (code {rc})")
     
     def on_message(self, client, userdata, msg):
         """Handle incoming command messages"""
@@ -39,7 +39,7 @@ class MQTTCommandListener:
             topic = msg.topic
             payload = json.loads(msg.payload.decode())
             
-            print(f"📥 Command received: {topic}")
+            print(f"Command received: {topic}")
             
             # Extract command type from topic
             # Example: "commands/timer/set" -> "timer_set"
@@ -51,7 +51,7 @@ class MQTTCommandListener:
                 if command_type in self.callbacks:
                     self.callbacks[command_type](payload)
                 else:
-                    print(f"⚠️  No callback registered for: {command_type}")
+                    print(f" No callback registered for: {command_type}")
             
         except Exception as e:
             print(f"✗ Error processing command: {e}")
