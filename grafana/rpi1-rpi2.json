@@ -4,8 +4,8 @@
       {
         "builtIn": 1,
         "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
+          "type": "influxdb",
+          "uid": "InfluxDB-IoT"
         },
         "enable": true,
         "hide": true,
@@ -1120,7 +1120,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "Complete IoT Sensor Dashboard",
-  "uid": "iot-complete-dashboard",
+  "uid": "InfluxDB-IoT",
   "version": 0,
   "weekStart": ""
 }

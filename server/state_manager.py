@@ -12,7 +12,7 @@ class SystemState:
     """Centralized system state - lives ONLY on server"""
     
     def __init__(self):
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         
         # Person counting
         self.people_count = 0
@@ -156,13 +156,13 @@ class SystemState:
             
             def countdown():
                 for i in range(10, 0, -1):
-                    print(f"🔐 Arming in {i}...")
+                    print(f"Arming in {i}...")
                     time.sleep(1)
                 
                 with self.lock:
                     self.security_armed = True
                     self.arming_countdown = None
-                    print("🔐 Security system ARMED")
+                    print("Security system ARMED")
                     self.trigger_callbacks('security_armed', True)
             
             self.arming_countdown = threading.Thread(target=countdown, daemon=True)
@@ -194,7 +194,7 @@ class SystemState:
             if not self.alarm_active:
                 self.alarm_active = True
                 self.alarm_reason = reason
-                print(f"🚨 ALARM TRIGGERED: {reason}")
+                print(f"ALARM TRIGGERED: {reason}")
                 self.trigger_callbacks('alarm_triggered', {'reason': reason})
     
     def clear_alarm(self):
@@ -203,7 +203,7 @@ class SystemState:
             if self.alarm_active:
                 self.alarm_active = False
                 self.alarm_reason = None
-                print("✅ Alarm cleared")
+                print("Alarm cleared")
                 self.trigger_callbacks('alarm_cleared', None)
     
     # ============ TIMER SYSTEM ============
@@ -214,7 +214,7 @@ class SystemState:
             self.timer_seconds = seconds
             self.timer_expired = False
             self.timer_blinking = False
-            print(f"⏱️  Timer set: {seconds}s")
+            print(f"Timer set: {seconds}s")
             self.trigger_callbacks('timer_updated', self.get_timer_state())
     
     def start_timer(self):
@@ -223,7 +223,7 @@ class SystemState:
             if self.timer_seconds > 0:
                 self.timer_running = True
                 self.timer_start_time = time.time()
-                print("▶️  Timer started")
+                print("Timer started")
                 self.trigger_callbacks('timer_updated', self.get_timer_state())
     
     def stop_timer(self):
@@ -232,7 +232,7 @@ class SystemState:
             self.timer_running = False
             self.timer_start_time = None
             self.timer_blinking = False
-            print("⏸️  Timer stopped")
+            print("Timer stopped")
             self.trigger_callbacks('timer_updated', self.get_timer_state())
     
     def get_timer_remaining(self) -> int:
@@ -248,7 +248,7 @@ class SystemState:
                 self.timer_expired = True
                 self.timer_blinking = True
                 self.timer_running = False
-                print("⏰ Timer EXPIRED!")
+                print("Timer EXPIRED!")
                 self.trigger_callbacks('timer_expired', None)
             
             return remaining
@@ -266,7 +266,7 @@ class SystemState:
                 if self.timer_running and self.timer_start_time:
                     self.timer_start_time -= seconds
             
-            print(f"➕ Added {seconds}s. Total: {self.timer_seconds}s")
+            print(f"Added {seconds}s. Total: {self.timer_seconds}s")
             self.trigger_callbacks('timer_updated', self.get_timer_state())
     
     def get_timer_state(self) -> dict:
@@ -293,5 +293,4 @@ class SystemState:
             }
 
 
-# Global instance (lives only on server)
 system_state = SystemState()
