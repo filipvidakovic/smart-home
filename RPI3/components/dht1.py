@@ -29,15 +29,18 @@ def dht1_callback(temperature, humidity, timestamp, mqtt_publisher=None, setting
             simulated=settings.get('simulated', False)
         )
     
-    # TODO: Update LCD display when LCD controller is implemented
-    # if lcd_controller:
-    #     lcd_controller.update_dht1(temperature, humidity)
+    # Update LCD display if available
+    if lcd_controller:
+        lcd_controller.update_sensor(temperature, humidity)
 
 
 def run_dht1(settings, threads, stop_event, mqtt_publisher=None, lcd_controller=None):
     """
     Start DHT1 sensor for Bedroom.
+    Returns the DHT sensor instance.
     """
+    dht1_sensor = None
+    
     def callback_wrapper(temperature, humidity, timestamp):
         dht1_callback(temperature, humidity, timestamp, mqtt_publisher, settings, lcd_controller)
     
@@ -56,14 +59,16 @@ def run_dht1(settings, threads, stop_event, mqtt_publisher=None, lcd_controller=
         from RPI3.sensors.dht1 import run_dht_loop, DHT
         print("Starting DHT1 loop (Bedroom)")
 
-        dht1 = DHT(settings['pin'])
+        dht1_sensor = DHT(settings['pin'])
         interval = settings.get('read_interval', 2)
         
         dht1_thread = threading.Thread(
             target=run_dht_loop,
-            args=(dht1, interval, callback_wrapper, stop_event),
+            args=(dht1_sensor, interval, callback_wrapper, stop_event),
             daemon=True
         )
         dht1_thread.start()
         threads.append(dht1_thread)
         print("DHT1 loop started")
+    
+    return dht1_sensor

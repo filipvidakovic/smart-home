@@ -5,6 +5,7 @@ import sys
 from RPI3.settings.settings import load_settings
 from RPI3.components.dht1 import run_dht1
 from RPI3.components.dht2 import run_dht2
+from RPI3.components.lcd import run_lcd
 from mqtt.publisher import MQTTPublisher
 
 try:
@@ -44,7 +45,20 @@ if __name__ == "__main__":
     print(f"  Description: {device_info.get('description', 'N/A')}")
     
     mqtt_publisher = None
-    lcd_controller = None  # TODO: Implement LCD controller later
+    lcd_controller = None
+    dht1_sensor = None
+    dht2_sensor = None
+    
+    # Create a mutable wrapper for LCD controller (can be updated later)
+    class LCDWrapper:
+        def __init__(self):
+            self.controller = None
+        
+        def update_sensor(self, temperature, humidity):
+            if self.controller:
+                self.controller.update_sensor(temperature, humidity)
+    
+    lcd_wrapper = LCDWrapper()
     
     try:
         # Initialize MQTT
@@ -61,19 +75,34 @@ if __name__ == "__main__":
         
         # DHT1 - Bedroom Temperature & Humidity Sensor
         if 'DHT1' in settings:
-            run_dht1(settings['DHT1'], threads, stop_event, mqtt_publisher, lcd_controller)
+            dht1_sensor = run_dht1(settings['DHT1'], threads, stop_event, mqtt_publisher, lcd_wrapper)
             print("✓ DHT1 Temperature & Humidity Sensor started (Bedroom)")
         
         # DHT2 - Master Bedroom Temperature & Humidity Sensor
         if 'DHT2' in settings:
-            run_dht2(settings['DHT2'], threads, stop_event, mqtt_publisher, lcd_controller)
+            dht2_sensor = run_dht2(settings['DHT2'], threads, stop_event, mqtt_publisher, lcd_wrapper)
             print("✓ DHT2 Temperature & Humidity Sensor started (Master Bedroom)")
+
+        print("\nInitializing LCD Display...")
+        if 'LCD' in settings:
+            # Create a dummy sensor object for LCD if DHT1 is available (even if simulated)
+            dummy_sensor = dht1_sensor if dht1_sensor else object()  # Use dummy object if no real sensor
+            try:
+                lcd_controller = run_lcd(settings['LCD'], stop_event, dht_sensor=dummy_sensor, mqtt_publisher=mqtt_publisher)
+                if lcd_controller:
+                    lcd_wrapper.controller = lcd_controller  # Update wrapper so DHT sensors can use it
+                    print("✓ LCD Display ready")
+                else:
+                    print("⚠ LCD Display skipped")
+            except Exception as e:
+                print(f"⚠ LCD initialization error: {e}")
+                import traceback
+                traceback.print_exc()
         
         # TODO: Add other sensors when ready:
         # - DPIR3 (Motion sensor)
         # - IR (Infrared sensor)
         # - BRGB (RGB LED)
-        # - LCD (Display controller)
         
         print("\n" + "="*60)
         print("All components initialized successfully!")
@@ -103,6 +132,12 @@ if __name__ == "__main__":
         
         # Cleanup
         cleanup_resources(mqtt_publisher)
+        
+        if lcd_controller:
+            try:
+                lcd_controller.cleanup()
+            except Exception as e:
+                print(f"Error cleaning up LCD: {e}")
         
         try:
             GPIO.cleanup()
