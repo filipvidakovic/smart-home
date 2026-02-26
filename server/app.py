@@ -30,7 +30,7 @@ command_mqtt_client = None  # Sends commands to RPIs
 mqtt_connected = False
 
 # Device tracking
-device_last_seen = {'PI1': None, 'PI2': None}
+device_last_seen = {'PI1': None, 'PI2': None, 'PI3': None}
 device_sensors = {
     'PI1': {
         'door': {'type': 'door', 'last_value': None, 'last_reading': None},
@@ -44,6 +44,12 @@ device_sensors = {
         'temperature': {'type': 'temperature', 'last_value': None, 'last_reading': None},
         'humidity': {'type': 'humidity', 'last_value': None, 'last_reading': None},
         'button': {'type': 'button', 'last_value': None, 'last_reading': None}
+    },
+    'PI3': {
+        'temperature_bedroom': {'type': 'temperature', 'last_value': None, 'last_reading': None},
+        'humidity_bedroom': {'type': 'humidity', 'last_value': None, 'last_reading': None},
+        'temperature_master': {'type': 'temperature', 'last_value': None, 'last_reading': None},
+        'humidity_master': {'type': 'humidity', 'last_value': None, 'last_reading': None}
     }
 }
 
@@ -266,7 +272,8 @@ def get_all_devices():
     devices = []
     device_info = {
         'PI1': {'device_name': 'Entrance Device', 'location': 'Main Door'},
-        'PI2': {'device_name': 'Kitchen Device', 'location': 'Kitchen'}
+        'PI2': {'device_name': 'Kitchen Device', 'location': 'Kitchen'},
+        'PI3': {'device_name': 'Bedrooms Device', 'location': 'Bedrooms'}
     }
     
     for device_id, info in device_info.items():

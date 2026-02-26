@@ -1,9 +1,9 @@
 {
     "device": {
         "pi_id": "PI3",
-        "device_name": "RaspberryPi_Bedroom",
-        "location": "Building_A_Floor_1",
-        "description": "Bedroom monitoring device"
+        "device_name": "RaspberryPi_Bedrooms",
+        "location": "Bedrooms",
+        "description": "Bedroom and Master Bedroom monitoring device with LCD display"
     },
     "mqtt": {
         "broker": "localhost",
@@ -20,11 +20,15 @@
 
     "DHT1": {
         "simulated": true,
-        "pin": 1
+        "pin": 1,
+        "read_interval": 2,
+        "location": "Bedroom"
     },
     "DHT2": {
         "simulated": true,
-        "pin": 2
+        "pin": 2,
+        "read_interval": 2,
+        "location": "Master Bedroom"
     },
     "IR": {
         "simulated": true,
