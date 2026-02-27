@@ -53,6 +53,24 @@ device_sensors = {
     }
 }
 
+# LCD Display state - stores current LCD display data
+lcd_display_state = {
+    'PI3': {
+        'line1': 'Smart Home LCD',
+        'line2': 'DHT Sensor',
+        'current_sensor': 'dht1',
+        'dht1': {'temperature': None, 'humidity': None, 'location': 'Bedroom'},
+        'dht2': {'temperature': None, 'humidity': None, 'location': 'Master Bedroom'},
+        'last_updated': None
+    },
+    'PI2': {
+        'line1': 'Kitchen DHT',
+        'line2': 'Temperature',
+        'dht3': {'temperature': None, 'humidity': None, 'location': 'Kitchen'},
+        'last_updated': None
+    }
+}
+
 
 def init_influxdb():
     """Initialize InfluxDB"""
@@ -126,6 +144,32 @@ def handle_sensor_data(payload):
         if device_id in device_sensors and sensor_type in device_sensors[device_id]:
             device_sensors[device_id][sensor_type]['last_value'] = value
             device_sensors[device_id][sensor_type]['last_reading'] = reading.get('timestamp')
+        
+        # Update LCD display state for PI3 (Bedrooms)
+        if device_id == 'PI3' and sensor_type == 'temperature':
+            if 'dht1' in reading.get('sensor_id', '').lower():
+                lcd_display_state['PI3']['dht1']['temperature'] = value
+                lcd_display_state['PI3']['last_updated'] = datetime.now().isoformat()
+            elif 'dht2' in reading.get('sensor_id', '').lower():
+                lcd_display_state['PI3']['dht2']['temperature'] = value
+                lcd_display_state['PI3']['last_updated'] = datetime.now().isoformat()
+        elif device_id == 'PI3' and sensor_type == 'humidity':
+            if 'dht1' in reading.get('sensor_id', '').lower():
+                lcd_display_state['PI3']['dht1']['humidity'] = value
+                lcd_display_state['PI3']['last_updated'] = datetime.now().isoformat()
+            elif 'dht2' in reading.get('sensor_id', '').lower():
+                lcd_display_state['PI3']['dht2']['humidity'] = value
+                lcd_display_state['PI3']['last_updated'] = datetime.now().isoformat()
+        
+        # Update LCD display state for PI2 (Kitchen)
+        if device_id == 'PI2' and sensor_type == 'temperature':
+            if 'dht3' in reading.get('sensor_id', '').lower():
+                lcd_display_state['PI2']['dht3']['temperature'] = value
+                lcd_display_state['PI2']['last_updated'] = datetime.now().isoformat()
+        elif device_id == 'PI2' and sensor_type == 'humidity':
+            if 'dht3' in reading.get('sensor_id', '').lower():
+                lcd_display_state['PI2']['dht3']['humidity'] = value
+                lcd_display_state['PI2']['last_updated'] = datetime.now().isoformat()
         
         # ===== UPDATE SERVER STATE BASED ON SENSOR TYPE =====
         
@@ -294,6 +338,28 @@ def get_all_devices():
         })
     
     return jsonify(devices), 200
+
+
+@app.route('/lcd/display', methods=['GET'])
+def get_lcd_display():
+    """Get LCD display data from PI3 (Bedrooms) and PI2 (Kitchen)"""
+    pi3_lcd = lcd_display_state.get('PI3', {})
+    pi2_lcd = lcd_display_state.get('PI2', {})
+    return jsonify({
+        'PI3': {
+            'device_id': 'PI3',
+            'location': 'Bedrooms',
+            'dht1': pi3_lcd.get('dht1', {}),
+            'dht2': pi3_lcd.get('dht2', {}),
+            'last_updated': pi3_lcd.get('last_updated')
+        },
+        'PI2': {
+            'device_id': 'PI2',
+            'location': 'Kitchen',
+            'dht3': pi2_lcd.get('dht3', {}),
+            'last_updated': pi2_lcd.get('last_updated')
+        }
+    }), 200
 
 
 @app.route('/security/arm', methods=['POST'])

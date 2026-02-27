@@ -19,14 +19,16 @@ def dht1_callback(temperature, humidity, timestamp, mqtt_publisher=None, setting
         mqtt_publisher.add_reading(
             sensor_type='temperature',
             value=temperature,
-            simulated=settings.get('simulated', False)
+            simulated=settings.get('simulated', False),
+            sensor_id='dht1'
         )
         
         # Send humidity to MQTT
         mqtt_publisher.add_reading(
             sensor_type='humidity',
             value=humidity,
-            simulated=settings.get('simulated', False)
+            simulated=settings.get('simulated', False),
+            sensor_id='dht1'
         )
     
     # Update LCD display if available
