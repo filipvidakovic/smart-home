@@ -36,7 +36,9 @@
     },
     "BRGB": {
         "simulated": true,
-        "pin": 4
+        "red_pin": 17,
+        "green_pin": 27,
+        "blue_pin": 22
     },
     "LCD": {
         "simulated": true,

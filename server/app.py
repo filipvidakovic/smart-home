@@ -378,6 +378,30 @@ def get_all_devices():
     return jsonify(devices), 200
 
 
+@app.route('/lamp/control', methods=['POST'])
+def control_lamp():
+    """Control RGB lamp on PI3"""
+    data = request.get_json()
+    command = data.get('command', '')  # 'on', 'off', 'set_color'
+    color = data.get('color', 'white')  # Color name
+    
+    if command not in ['on', 'off', 'set_color']:
+        return jsonify({"error": "Invalid command. Use 'on', 'off', or 'set_color'"}), 400
+    
+    # Send command to PI3
+    payload = {
+        'command': command,
+        'color': color
+    }
+    send_command("PI3", "lamp_control", payload)
+    
+    return jsonify({
+        "success": True, 
+        "message": f"Lamp command '{command}' sent",
+        "color": color if command in ['on', 'set_color'] else None
+    }), 200
+
+
 @app.route('/lcd/display', methods=['GET'])
 def get_lcd_display():
     """Get LCD display data from PI3 (Bedrooms) and PI2 (Kitchen)"""

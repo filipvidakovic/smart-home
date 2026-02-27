@@ -7,7 +7,9 @@ from RPI3.components.dht1 import run_dht1
 from RPI3.components.dht2 import run_dht2
 from RPI3.components.dpir3 import run_dpir3
 from RPI3.components.lcd import run_lcd
+from RPI3.components.brgb import run_brgb
 from mqtt.publisher import MQTTPublisher
+from shared.mqtt_command_listener import MQTTCommandListener
 
 try:
     import RPi.GPIO as GPIO
@@ -18,7 +20,7 @@ except Exception as e:
     print(f"GPIO setup warning: {e}")
 
 
-def cleanup_resources(mqtt_publisher):
+def cleanup_resources(mqtt_publisher, command_listener=None):
     print("\nCleaning up resources...")
     
     if mqtt_publisher:
@@ -27,6 +29,13 @@ def cleanup_resources(mqtt_publisher):
             print("MQTT disconnected")
         except Exception as e:
             print(f"Error disconnecting MQTT: {e}")
+    
+    if command_listener:
+        try:
+            command_listener.disconnect()
+            print("Command listener disconnected")
+        except Exception as e:
+            print(f"Error disconnecting command listener: {e}")
 
 
 if __name__ == "__main__":
@@ -46,7 +55,9 @@ if __name__ == "__main__":
     print(f"  Description: {device_info.get('description', 'N/A')}")
     
     mqtt_publisher = None
+    command_listener = None
     lcd_controller = None
+    rgb_lamp = None
     dht1_sensor = None
     dht2_sensor = None
     dpir3_sensor = None
@@ -63,7 +74,7 @@ if __name__ == "__main__":
     lcd_wrapper = LCDWrapper()
     
     try:
-        # Initialize MQTT
+        # Initialize MQTT Publisher
         print("\nInitializing MQTT Publisher...")
         mqtt_publisher = MQTTPublisher(settings)
         if mqtt_publisher.connect():
@@ -72,6 +83,20 @@ if __name__ == "__main__":
         else:
             print("⚠ MQTT connection failed, continuing without MQTT")
             mqtt_publisher = None
+        
+        # Initialize MQTT Command Listener
+        print("\nInitializing MQTT Command Listener...")
+        mqtt_settings = settings.get('mqtt', {})
+        command_listener = MQTTCommandListener(
+            broker=mqtt_settings.get('broker', 'localhost'),
+            port=mqtt_settings.get('port', 1883),
+            device_id=settings.get('device', {}).get('pi_id', 'PI3')
+        )
+        if command_listener.connect():
+            print("✓ Command Listener ready")
+        else:
+            print("⚠ Command Listener failed, continuing without commands")
+            command_listener = None
 
         print("\nStarting Sensors...")
         
@@ -89,6 +114,11 @@ if __name__ == "__main__":
         if 'DPIR3' in settings:
             dpir3_sensor = run_dpir3(settings['DPIR3'], threads, stop_event, mqtt_publisher)
             print("✓ DPIR3 Motion Sensor started (Bedroom)")
+        
+        # BRGB - RGB LED Lamp
+        if 'BRGB' in settings:
+            rgb_lamp = run_brgb(settings['BRGB'], command_listener)
+            print("✓ BRGB RGB Lamp initialized")
 
         print("\nInitializing LCD Display...")
         if 'LCD' in settings:
@@ -108,7 +138,6 @@ if __name__ == "__main__":
         
         # TODO: Add other sensors when ready:
         # - IR (Infrared sensor)
-        # - BRGB (RGB LED)
         
         print("\n" + "="*60)
         print("All components initialized successfully!")
@@ -137,13 +166,19 @@ if __name__ == "__main__":
                 thread.join(timeout=2)
         
         # Cleanup
-        cleanup_resources(mqtt_publisher)
+        cleanup_resources(mqtt_publisher, command_listener)
         
         if lcd_controller:
             try:
                 lcd_controller.cleanup()
             except Exception as e:
                 print(f"Error cleaning up LCD: {e}")
+        
+        if rgb_lamp:
+            try:
+                rgb_lamp.cleanup()
+            except Exception as e:
+                print(f"Error cleaning up RGB Lamp: {e}")
         
         try:
             GPIO.cleanup()
