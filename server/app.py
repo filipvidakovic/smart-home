@@ -113,14 +113,16 @@ def on_message(client, userdata, msg):
         
         # ========== SENSOR DATA ==========
         if topic.startswith("sensors/"):
+            print(f"📥 MQTT: {topic} → {payload.get('readings', [{}])[0].get('sensor_type', 'unknown')} reading")
             handle_sensor_data(payload)
         
         # ========== RPI EVENTS ==========
         elif topic.startswith("events/"):
+            print(f"📥 MQTT: {topic}")
             handle_rpi_event(topic, payload)
             
     except Exception as e:
-        print(f" Error processing message: {e}")
+        print(f"❌ Error processing message: {e}")
         import traceback
         traceback.print_exc()
 
@@ -137,6 +139,10 @@ def handle_sensor_data(payload):
         device_id = reading.get('device_id')
         sensor_type = reading.get('sensor_type')
         value = reading.get('value')
+        
+        # DEBUG: Show all motion readings
+        if sensor_type == 'motion':
+            print(f"🔍 Processing motion: device={device_id}, value={value} (type: {type(value)})")
         
         # Update device tracking
         if device_id in device_last_seen:
@@ -177,6 +183,27 @@ def handle_sensor_data(payload):
         # Distance readings for motion tracking
         if sensor_type == 'distance':
             system_state.add_distance_reading(device_id, value)
+        
+        # Motion detection for people counting
+        elif sensor_type == 'motion' and value == 1:  # 1 = motion detected
+            distance_history = system_state.distance_history.get(device_id, [])
+            print(f"🔍 Motion detected on {device_id}, direction detection result: checking {len(distance_history)} distance readings")
+            
+            direction = system_state.detect_motion_direction(device_id)
+            print(f"🔍 Motion detected on {device_id}, direction detection result: {direction}")
+            
+            if direction == 'entering':
+                system_state.update_people_count(+1)
+                print(f"➡️  Person ENTERING via {device_id}")
+            elif direction == 'exiting':
+                system_state.update_people_count(-1)
+                print(f"⬅️  Person EXITING via {device_id}")
+            else:
+                print(f"❓ Unclear direction (not enough distance history yet)")
+            
+            # Check for alarm condition (motion with 0 people)
+            if system_state.people_count == 0:
+                system_state.trigger_alarm(f"Motion detected with empty building ({device_id})")
         
         # Door state updates
         elif sensor_type == 'door':

@@ -83,15 +83,29 @@ class SystemState:
         with self.lock:
             history = self.distance_history.get(device_id, [])
             
-            if len(history) < 3:
-                return None
+            # If no distance data at all, assume entering (person approaching to trigger motion)
+            if len(history) == 0:
+                return 'entering'
+            
+            # With 1 reading, use a default or require more data
+            if len(history) == 1:
+                return None  # Not enough data yet
             
             distances = [d for d, t in history]
+            
+            # For 2 readings, compare first and last
+            if len(history) == 2:
+                diff = distances[-1] - distances[0]
+                if abs(diff) > 10:  # 10cm threshold
+                    return 'entering' if diff < 0 else 'exiting'
+                return None  # Motion but distance not changing enough
+            
+            # For 3+ readings, use averages (more stable)
             first_avg = sum(distances[:3]) / 3
             last_avg = sum(distances[-3:]) / 3
             diff = last_avg - first_avg
             
-            if abs(diff) > 20:  # 20cm threshold
+            if abs(diff) > 15:  # 15cm threshold
                 return 'entering' if diff < 0 else 'exiting'
             
             return None

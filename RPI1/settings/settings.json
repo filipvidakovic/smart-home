@@ -15,8 +15,8 @@
             "membrane": "sensors/membrane",
             "door_status": "sensors/door_status"
         },
-    "batch_size": 5,
-    "batch_interval": 10
+        "batch_size": 1,
+        "batch_interval": 1
     },
     "DS1": {
         "simulated": true,
@@ -45,8 +45,18 @@
     "DMS1": {
         "simulated": true,
         "delay": 1,
-        "rows": [25, 8, 7, 1],
-        "cols": [12, 16, 20, 21],
+        "rows": [
+            25,
+            8,
+            7,
+            1
+        ],
+        "cols": [
+            12,
+            16,
+            20,
+            21
+        ],
         "pin_code": "1234"
     }
 }
