@@ -212,6 +212,14 @@ def handle_sensor_data(payload):
             door_id = 'DS1' if device_id == 'PI1' else 'DS2'
             system_state.update_door_state(door_id, value == 1)
         
+        # GSG (Gyroscope/Accelerometer) - detect dangerous movement
+        elif sensor_type in ['accel_x', 'accel_y', 'accel_z'] and device_id == 'PI2':
+            # Detect strong acceleration (greater move)
+            # Threshold: acceleration > 1.5g indicates dangerous shaking/movement
+            if abs(value) > 1.5:
+                system_state.trigger_alarm(f"⚠️ Saint George is in dangerous - High acceleration detected ({sensor_type}={value:.2f}g)")
+                print(f"⚠️ ALARM: GSG detected dangerous movement on {device_id}: {sensor_type}={value:.2f}g")
+        
         # Create InfluxDB point
         point = Point(sensor_type) \
             .tag("device_id", device_id) \
