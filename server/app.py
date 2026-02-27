@@ -187,10 +187,15 @@ def handle_sensor_data(payload):
         # Motion detection for people counting
         elif sensor_type == 'motion' and value == 1:  # 1 = motion detected
             distance_history = system_state.distance_history.get(device_id, [])
-            print(f"🔍 Motion detected on {device_id}, direction detection result: checking {len(distance_history)} distance readings")
+            print(f"🔍 Motion detected on {device_id}, checking {len(distance_history)} distance readings...")
+            
+            # SECURITY: If building is empty (0 people), ANY motion triggers alarm
+            if system_state.people_count == 0:
+                system_state.trigger_alarm(f"🚨 INTRUSION DETECTED: Motion detected in empty building ({device_id})")
+                print(f"🚨 ALARM: Motion detected with empty building ({device_id})")
             
             direction = system_state.detect_motion_direction(device_id)
-            print(f"🔍 Motion detected on {device_id}, direction detection result: {direction}")
+            print(f"🔍 Motion detected on {device_id}, direction: {direction}")
             
             if direction == 'entering':
                 system_state.update_people_count(+1)
@@ -199,11 +204,8 @@ def handle_sensor_data(payload):
                 system_state.update_people_count(-1)
                 print(f"⬅️  Person EXITING via {device_id}")
             else:
-                print(f"❓ Unclear direction (not enough distance history yet)")
-            
-            # Check for alarm condition (motion with 0 people)
-            if system_state.people_count == 0:
-                system_state.trigger_alarm(f"Motion detected with empty building ({device_id})")
+                # No clear direction - wait for more distance data
+                print(f"⏳ Unclear direction - accumulating distance history ({len(distance_history)} readings so far)")
         
         # Door state updates
         elif sensor_type == 'door':
@@ -432,10 +434,12 @@ def clear_alarm():
     if pin != SECURITY_PIN:
         return jsonify({"error": "Incorrect PIN"}), 401
     
+    # Clear the alarm
+    system_state.clear_alarm()
     system_state.disarm_security()
     send_command("all", "alarm_cleared", {})
     
-    return jsonify({"success": True}), 200
+    return jsonify({"success": True, "message": "Alarm deactivated"}), 200
 
 
 @app.route('/timer/set', methods=['POST'])

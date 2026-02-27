@@ -116,6 +116,11 @@ class SystemState:
             old_count = self.people_count
             self.people_count = max(0, self.people_count + delta)
             
+            # SIMULATION: Reset to 0 when reaching 3 people
+            if self.people_count == 3:
+                print(f"🔄 SIMULATION: Building reached capacity (3), resetting to 0 (simulating evacuation)")
+                self.people_count = 0
+            
             if self.people_count != old_count:
                 print(f"👥 People count: {old_count} → {self.people_count}")
                 self.trigger_callbacks('people_count_changed', self.people_count)
