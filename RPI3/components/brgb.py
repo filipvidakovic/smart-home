@@ -18,7 +18,7 @@ def create_rgb_lamp(settings):
         )
 
 
-def run_brgb(settings, command_listener=None):
+def run_brgb(settings, threads=None, stop_event=None, command_listener=None):
     """Initialize RGB lamp and register command callback"""
     
     lamp = create_rgb_lamp(settings)
@@ -48,5 +48,18 @@ def run_brgb(settings, command_listener=None):
     if command_listener:
         command_listener.register_callback('lamp_control', handle_lamp_command)
         print("✓ RGB Lamp: Registered command callback")
+    
+    # Start simulator loop if simulated and threads provided
+    if settings.get('simulated', False) and threads is not None and stop_event is not None:
+        from RPI3.simulators.brgb import run_brgb_simulator
+        interval = settings.get('update_interval', 1)
+        lamp_thread = threading.Thread(
+            target=run_brgb_simulator,
+            args=(lamp, interval, stop_event),
+            daemon=True
+        )
+        lamp_thread.start()
+        threads.append(lamp_thread)
+        print("✓ RGB Lamp: Simulator loop started")
     
     return lamp

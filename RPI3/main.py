@@ -117,7 +117,7 @@ if __name__ == "__main__":
         
         # BRGB - RGB LED Lamp
         if 'BRGB' in settings:
-            rgb_lamp = run_brgb(settings['BRGB'], command_listener)
+            rgb_lamp = run_brgb(settings['BRGB'], threads, stop_event, command_listener)
             print("✓ BRGB RGB Lamp initialized")
 
         print("\nInitializing LCD Display...")
