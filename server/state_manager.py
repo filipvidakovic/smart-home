@@ -302,13 +302,19 @@ class SystemState:
     def get_full_state(self) -> dict:
         """Get complete system state (thread-safe)"""
         with self.lock:
+            timer_state = self.get_timer_state()
             return {
                 'people_count': self.people_count,
                 'security_armed': self.security_armed,
                 'alarm_active': self.alarm_active,
                 'alarm_reason': self.alarm_reason,
                 'door_states': self.door_states.copy(),
-                'timer': self.get_timer_state()
+                'timer': timer_state,
+                'timer_seconds': timer_state['seconds'],
+                'timer_running': timer_state['running'],
+                'timer_expired': timer_state['expired'],
+                'timer_blinking': timer_state['blinking'],
+                'timer_button_add_seconds': self.timer_button_add_seconds
             }
 
 

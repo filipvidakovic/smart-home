@@ -140,7 +140,6 @@ def handle_sensor_data(payload):
         sensor_type = reading.get('sensor_type')
         value = reading.get('value')
         
-        # DEBUG: Show all motion readings
         if sensor_type == 'motion':
             print(f"🔍 Processing motion: device={device_id}, value={value} (type: {type(value)})")
         
@@ -214,7 +213,6 @@ def handle_sensor_data(payload):
         
         # GSG (Gyroscope/Accelerometer) - detect dangerous movement
         elif sensor_type in ['accel_x', 'accel_y', 'accel_z'] and device_id == 'PI2':
-            # Detect strong acceleration (greater move)
             # Threshold: acceleration > 1.5g indicates dangerous shaking/movement
             if abs(value) > 1.5:
                 system_state.trigger_alarm(f"⚠️ Saint George is in dangerous - High acceleration detected ({sensor_type}={value:.2f}g)")
@@ -402,6 +400,55 @@ def control_lamp():
     }), 200
 
 
+@app.route('/ir/control', methods=['POST'])
+def control_ir():
+    """Send IR command from PI3 IR remote to BRGB lamp"""
+    data = request.get_json()
+    command = data.get('command', '')  # 'power', 'color_next', 'color_prev'
+    device = data.get('device', 'brgb')  # Only BRGB supported
+    
+    if device != 'brgb':
+        return jsonify({"error": "Only BRGB device is supported"}), 400
+    
+    # Map 'power' to 'power_toggle' for internal processing
+    if command == 'power':
+        command = 'power_toggle'
+    
+    valid_commands = ['power_toggle', 'color_next', 'color_prev']
+    if command not in valid_commands:
+        return jsonify({"error": f"Invalid command. Use one of: power, color_next, color_prev"}), 400
+    
+    # Send IR command to PI3 for BRGB control
+    payload = {
+        'command': command,
+        'device': device
+    }
+    send_command("PI3", "ir_command", payload)
+    
+    return jsonify({
+        "success": True,
+        "message": f"IR command '{command}' sent to {device}",
+        "device": device
+    }), 200
+
+
+@app.route('/ir/devices', methods=['GET'])
+def get_ir_devices():
+    """Get available IR devices and their supported commands"""
+    devices = {
+        'brgb': {
+            'name': 'RGB Lamp',
+            'emoji': '💡',
+            'commands': ['power', 'color_next', 'color_prev']
+        }
+    }
+    
+    return jsonify({
+        "devices": devices,
+        "message": "Available IR-controlled device: BRGB lamp"
+    }), 200
+
+
 @app.route('/lcd/display', methods=['GET'])
 def get_lcd_display():
     """Get LCD display data from PI3 (Bedrooms) and PI2 (Kitchen)"""
@@ -512,6 +559,26 @@ def add_timer_seconds():
     send_command("PI2", "timer_add", {"seconds": seconds})
     
     return jsonify({"success": True}), 200
+
+
+@app.route('/timer/button-seconds', methods=['GET'])
+def get_timer_button_seconds():
+    """Get configured seconds to add on button press"""
+    return jsonify({"seconds": system_state.timer_button_add_seconds}), 200
+
+
+@app.route('/timer/button-seconds', methods=['POST'])
+def set_timer_button_seconds():
+    """Set configured seconds to add on button press"""
+    data = request.get_json()
+    try:
+        seconds = int(data.get('seconds', 10))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Seconds must be an integer"}), 400
+    if seconds < 1:
+        return jsonify({"error": "Seconds must be >= 1"}), 400
+    system_state.timer_button_add_seconds = seconds
+    return jsonify({"success": True, "seconds": system_state.timer_button_add_seconds}), 200
 
 
 @app.route('/stats', methods=['GET'])
