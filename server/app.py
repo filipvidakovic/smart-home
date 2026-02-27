@@ -49,7 +49,8 @@ device_sensors = {
         'temperature_bedroom': {'type': 'temperature', 'last_value': None, 'last_reading': None},
         'humidity_bedroom': {'type': 'humidity', 'last_value': None, 'last_reading': None},
         'temperature_master': {'type': 'temperature', 'last_value': None, 'last_reading': None},
-        'humidity_master': {'type': 'humidity', 'last_value': None, 'last_reading': None}
+        'humidity_master': {'type': 'humidity', 'last_value': None, 'last_reading': None},
+        'motion': {'type': 'motion', 'last_value': None, 'last_reading': None}
     }
 }
 

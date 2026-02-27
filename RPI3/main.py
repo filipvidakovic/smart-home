@@ -5,6 +5,7 @@ import sys
 from RPI3.settings.settings import load_settings
 from RPI3.components.dht1 import run_dht1
 from RPI3.components.dht2 import run_dht2
+from RPI3.components.dpir3 import run_dpir3
 from RPI3.components.lcd import run_lcd
 from mqtt.publisher import MQTTPublisher
 
@@ -48,6 +49,7 @@ if __name__ == "__main__":
     lcd_controller = None
     dht1_sensor = None
     dht2_sensor = None
+    dpir3_sensor = None
     
     # Create a mutable wrapper for LCD controller (can be updated later)
     class LCDWrapper:
@@ -83,6 +85,11 @@ if __name__ == "__main__":
             dht2_sensor = run_dht2(settings['DHT2'], threads, stop_event, mqtt_publisher, lcd_wrapper)
             print("✓ DHT2 Temperature & Humidity Sensor started (Master Bedroom)")
 
+        # DPIR3 - Bedroom Motion Sensor
+        if 'DPIR3' in settings:
+            dpir3_sensor = run_dpir3(settings['DPIR3'], threads, stop_event, mqtt_publisher)
+            print("✓ DPIR3 Motion Sensor started (Bedroom)")
+
         print("\nInitializing LCD Display...")
         if 'LCD' in settings:
             # Create a dummy sensor object for LCD if DHT1 is available (even if simulated)
@@ -100,7 +107,6 @@ if __name__ == "__main__":
                 traceback.print_exc()
         
         # TODO: Add other sensors when ready:
-        # - DPIR3 (Motion sensor)
         # - IR (Infrared sensor)
         # - BRGB (RGB LED)
         
