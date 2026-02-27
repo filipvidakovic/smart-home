@@ -8,6 +8,7 @@ from RPI3.components.dht2 import run_dht2
 from RPI3.components.dpir3 import run_dpir3
 from RPI3.components.lcd import run_lcd
 from RPI3.components.brgb import run_brgb
+from RPI3.components.ir import run_ir
 from mqtt.publisher import MQTTPublisher
 from shared.mqtt_command_listener import MQTTCommandListener
 
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     command_listener = None
     lcd_controller = None
     rgb_lamp = None
+    ir_remote = None
     dht1_sensor = None
     dht2_sensor = None
     dpir3_sensor = None
@@ -115,10 +117,30 @@ if __name__ == "__main__":
             dpir3_sensor = run_dpir3(settings['DPIR3'], threads, stop_event, mqtt_publisher)
             print("✓ DPIR3 Motion Sensor started (Bedroom)")
         
+        # Check if IR is simulated - it will control BRGB exclusively
+        ir_controls_brgb = 'IR' in settings and settings['IR'].get('simulated', False)
+        
         # BRGB - RGB LED Lamp
         if 'BRGB' in settings:
-            rgb_lamp = run_brgb(settings['BRGB'], threads, stop_event, command_listener)
-            print("✓ BRGB RGB Lamp initialized")
+            brgb_settings = settings['BRGB'].copy()
+            
+            if ir_controls_brgb:
+                # IR controls BRGB - disable BRGB's own simulation
+                print("⚠️  IR simulator detected - BRGB auto-cycling disabled (IR will control it)")
+                brgb_settings['simulated'] = False  # Disable BRGB auto-simulation
+                # Create BRGB but don't start its thread - IR will control it
+                from RPI3.simulators.brgb import SimulatedRGBLamp
+                rgb_lamp = SimulatedRGBLamp()
+                print("✓ BRGB RGB Lamp initialized (controlled by IR)")
+            else:
+                # Normal BRGB operation with auto-cycling
+                rgb_lamp = run_brgb(brgb_settings, threads, stop_event, command_listener)
+                print("✓ BRGB RGB Lamp initialized")
+        
+        # IR - Infrared Remote
+        if 'IR' in settings:
+            ir_remote = run_ir(settings['IR'], command_listener, brgb_lamp=rgb_lamp, threads=threads, stop_event=stop_event)
+            print("✓ IR Remote initialized")
 
         print("\nInitializing LCD Display...")
         if 'LCD' in settings:
@@ -174,6 +196,12 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"Error cleaning up LCD: {e}")
         
+        
+        if ir_remote:
+            try:
+                ir_remote.cleanup()
+            except Exception as e:
+                print(f"Error cleaning up IR Remote: {e}")
         if rgb_lamp:
             try:
                 rgb_lamp.cleanup()

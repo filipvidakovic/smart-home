@@ -34,11 +34,10 @@
         "simulated": true,
         "pin": 3
     },
-    "BRGB": {
+    "IR": {
         "simulated": true,
-        "red_pin": 17,
-        "green_pin": 27,
-        "blue_pin": 22
+        "tx_pin": 23,
+        "rx_pin": 24
     },
     "LCD": {
         "simulated": true,
