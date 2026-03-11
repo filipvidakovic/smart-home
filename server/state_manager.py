@@ -83,15 +83,29 @@ class SystemState:
         with self.lock:
             history = self.distance_history.get(device_id, [])
             
-            if len(history) < 3:
-                return None
+            # If no distance data at all, assume entering (person approaching to trigger motion)
+            if len(history) == 0:
+                return 'entering'
+            
+            # With 1 reading, use a default or require more data
+            if len(history) == 1:
+                return None  # Not enough data yet
             
             distances = [d for d, t in history]
+            
+            # For 2 readings, compare first and last
+            if len(history) == 2:
+                diff = distances[-1] - distances[0]
+                if abs(diff) > 10:  # 10cm threshold
+                    return 'entering' if diff < 0 else 'exiting'
+                return None  # Motion but distance not changing enough
+            
+            # For 3+ readings, use averages (more stable)
             first_avg = sum(distances[:3]) / 3
             last_avg = sum(distances[-3:]) / 3
             diff = last_avg - first_avg
             
-            if abs(diff) > 20:  # 20cm threshold
+            if abs(diff) > 15:  # 15cm threshold
                 return 'entering' if diff < 0 else 'exiting'
             
             return None
@@ -101,6 +115,11 @@ class SystemState:
         with self.lock:
             old_count = self.people_count
             self.people_count = max(0, self.people_count + delta)
+            
+            # SIMULATION: Reset to 0 when reaching 3 people
+            if self.people_count == 3:
+                print(f"🔄 SIMULATION: Building reached capacity (3), resetting to 0 (simulating evacuation)")
+                self.people_count = 0
             
             if self.people_count != old_count:
                 print(f"👥 People count: {old_count} → {self.people_count}")
@@ -283,13 +302,19 @@ class SystemState:
     def get_full_state(self) -> dict:
         """Get complete system state (thread-safe)"""
         with self.lock:
+            timer_state = self.get_timer_state()
             return {
                 'people_count': self.people_count,
                 'security_armed': self.security_armed,
                 'alarm_active': self.alarm_active,
                 'alarm_reason': self.alarm_reason,
                 'door_states': self.door_states.copy(),
-                'timer': self.get_timer_state()
+                'timer': timer_state,
+                'timer_seconds': timer_state['seconds'],
+                'timer_running': timer_state['running'],
+                'timer_expired': timer_state['expired'],
+                'timer_blinking': timer_state['blinking'],
+                'timer_button_add_seconds': self.timer_button_add_seconds
             }
 
 

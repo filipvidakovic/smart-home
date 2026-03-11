@@ -12,7 +12,8 @@ def dpir2_callback(motion_detected, timestamp, mqtt_publisher=None, settings=Non
         mqtt_publisher.add_reading(
             sensor_type='motion',
             value=1 if motion_detected else 0,
-            simulated=settings.get('simulated', False)
+            simulated=settings.get('simulated', False),
+            sensor_id='dpir2'
         )
 
 

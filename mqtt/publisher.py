@@ -128,7 +128,7 @@ class MQTTPublisher:
         
         print("MQTT: Disconnected")
     
-    def add_reading(self, sensor_type: str, value: Any, simulated: bool):
+    def add_reading(self, sensor_type: str, value: Any, simulated: bool, sensor_id: str = None):
         """Add sensor reading to queue (thread-safe)"""
         reading = {
             'timestamp': datetime.utcnow().isoformat(),
@@ -137,7 +137,8 @@ class MQTTPublisher:
             'location': self.device_info['location'],
             'sensor_type': sensor_type,
             'value': value,
-            'simulated': simulated
+            'simulated': simulated,
+            'sensor_id': sensor_id
         }
         self.message_queue.put(reading)
     

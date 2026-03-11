@@ -26,9 +26,10 @@ class MQTTCommandListener:
             self.connected = True
             print(f"✓ Command Listener: Connected to MQTT broker")
             
-            # Subscribe to all command topics
-            client.subscribe("commands/#")
-            print("✓ Command Listener: Subscribed to commands/#")
+            # Subscribe only to commands for this device
+            topic = f"commands/{self.device_id}/#"
+            client.subscribe(topic)
+            print(f"✓ Command Listener: Subscribed to {topic}")
         else:
             self.connected = False
             print(f"Command Listener: Connection failed (code {rc})")
@@ -62,11 +63,12 @@ class MQTTCommandListener:
         """Connect to MQTT broker and start listening"""
         try:
             self.client = mqtt.Client(
-                client_id=f"command_listener_{self.device_id}", 
-                clean_session=True
+                client_id=f"cmd_listener_{self.device_id}", 
+                clean_session=False  # Keep session to avoid disconnection issues
             )
             self.client.on_connect = self.on_connect
             self.client.on_message = self.on_message
+            self.client.on_disconnect = self.on_disconnect
             
             self.client.connect(self.broker, self.port, 60)
             self.client.loop_start()
@@ -76,6 +78,16 @@ class MQTTCommandListener:
         except Exception as e:
             print(f"✗ Command Listener connection failed: {e}")
             return False
+    
+    def on_disconnect(self, client, userdata, rc):
+        """Handle unexpected disconnection"""
+        if rc != 0:
+            print(f"⚠️  Command Listener: Unexpected disconnection (code {rc}), attempting to reconnect...")
+            # Attempt to reconnect
+            try:
+                client.reconnect()
+            except Exception as e:
+                print(f"✗ Command Listener: Reconnection failed - {e}")
     
     def disconnect(self):
         """Disconnect from MQTT"""
