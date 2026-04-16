@@ -235,6 +235,12 @@ def handle_sensor_data(payload):
 
 def handle_rpi_event(topic, payload):
     """Handle RPI events that affect system state"""
+
+    if 'led_state' in topic:
+        device_id = topic.split('/')[1]
+        led_id = payload.get('led_id', 'DL1')
+        is_on = payload.get('on', False)
+        system_state.update_led_state(led_id, is_on)
     
     # events/PI1/motion_detected
     if 'motion_detected' in topic:

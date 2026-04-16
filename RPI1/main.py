@@ -104,11 +104,11 @@ if __name__ == "__main__":
     
     try:
         # Start PI1 command listener
-        print("\n📥 Starting PI1 Command Listener...")
+        print("\n Starting PI1 Command Listener...")
         start_command_listener_pi1()
         
         # Initialize MQTT Publisher for sensor data
-        print("\n📡 Initializing MQTT Data Publisher...")
+        print("\n Initializing MQTT Data Publisher...")
         mqtt_publisher = MQTTPublisher(settings)
         if mqtt_publisher.connect():
             mqtt_publisher.start_daemon()
@@ -118,7 +118,7 @@ if __name__ == "__main__":
             mqtt_publisher = None
         
         # Initialize LED
-        print("\n💡 Initializing LED...")
+        print("\n Initializing LED...")
         if 'DL1' in settings:
             led_bulb = create_led_bulb(settings['DL1'])
             led_bulb.on()
@@ -131,7 +131,7 @@ if __name__ == "__main__":
             buzzer = Buzzer(settings['DB']['pin'])
             print("✓ Buzzer initialized")
         
-        print("\n🔌 Starting Sensors...")
+        print("\n Starting Sensors...")
         
         # Distance Sensor (for motion direction)
         if 'DUS1' in settings:
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         #     print("✓ DMS Console started")
         
         print("\n" + "="*60)
-        print("✅ PI1 System running... Press Ctrl+C to stop")
+        print("PI1 System running... Press Ctrl+C to stop")
         print("="*60 + "\n")
         
         heartbeat_counter = 0
@@ -172,16 +172,16 @@ if __name__ == "__main__":
                 print(f"💓 [PI1 Heartbeat] Running: {heartbeat_counter * 2}s")
     
     except KeyboardInterrupt:
-        print('\n\n⚠️  Received shutdown signal (Ctrl+C)')
+        print('\n\n  Received shutdown signal (Ctrl+C)')
     except Exception as e:
-        print(f'\n\n❌ Unexpected error: {e}')
+        print(f'\n\n Unexpected error: {e}')
         import traceback
         traceback.print_exc()
     finally:
-        print("\n🛑 Initiating shutdown sequence...")
+        print("\n Initiating shutdown sequence...")
         stop_event.set()
         
-        print("⏳ Waiting for threads to finish...")
+        print("Waiting for threads to finish...")
         for thread in threads:
             if thread.is_alive():
                 thread.join(timeout=2.0)
@@ -189,6 +189,6 @@ if __name__ == "__main__":
         cleanup_resources(led_bulb, buzzer, mqtt_publisher)
         
         print("\n" + "="*60)
-        print("✅ PI1 Application stopped successfully")
+        print("PI1 Application stopped successfully")
         print("="*60)
         sys.exit(0)

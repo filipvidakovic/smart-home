@@ -52,3 +52,4 @@ def run_dus1(settings, threads, stop_event, mqtt_publisher=None):
         dus1_thread.start()
         threads.append(dus1_thread)
         print("DUS1 loop started")
+        return dus1

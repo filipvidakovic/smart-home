@@ -40,6 +40,11 @@ class SystemState:
         self.timer_expired = False
         self.timer_blinking = False
         self.timer_button_add_seconds = 10
+
+        self.led_states = {
+            'DL1': {'on': False, 'last_changed': None},
+            'DL2': {'on': False, 'last_changed': None}
+        }
         
         # Callbacks for state changes
         self.callbacks = {}
@@ -130,6 +135,21 @@ class SystemState:
                     self.trigger_callbacks('building_empty', None)
             
             return self.people_count
+        
+    def update_led_state(self, led_id: str, is_on: bool):
+        """Update LED state"""
+        with self.lock:
+            if led_id not in self.led_states:
+                self.led_states[led_id] = {'on': False, 'last_changed': None}
+            
+            was_on = self.led_states[led_id]['on']
+            
+            if is_on != was_on:
+                self.led_states[led_id]['on'] = is_on
+                self.led_states[led_id]['last_changed'] = time.time()
+                print(f"💡 {led_id}: {'ON' if is_on else 'OFF'}")
+                self.trigger_callbacks('led_state_changed', {'led_id': led_id, 'on': is_on})
+    
     
     # ============ DOOR MANAGEMENT ============
     
@@ -309,6 +329,7 @@ class SystemState:
                 'alarm_active': self.alarm_active,
                 'alarm_reason': self.alarm_reason,
                 'door_states': self.door_states.copy(),
+                'led_states': self.led_states.copy(),
                 'timer': timer_state,
                 'timer_seconds': timer_state['seconds'],
                 'timer_running': timer_state['running'],
