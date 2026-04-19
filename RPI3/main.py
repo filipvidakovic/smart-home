@@ -1,6 +1,11 @@
 import threading
 import time
 import sys
+import os
+
+# Allow running as script: python RPI3/main.py
+if __package__ is None or __package__ == "":
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from RPI3.settings.settings import load_settings
 from RPI3.components.dht1 import run_dht1
