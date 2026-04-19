@@ -1,8 +1,13 @@
 import threading
 import time
 import sys
+import os
 import paho.mqtt.client as mqtt
 import json
+
+# Allow running as script: python RPI1/main.py
+if __package__ is None or __package__ == "":
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from RPI1.components.dms import run_dms_console
 from RPI1.sensors.db import Buzzer
@@ -11,17 +16,19 @@ from RPI1.components.ds1 import run_ds1
 from RPI1.components.dpir1 import run_dpir1
 from RPI1.components.dus1 import run_dus1
 from RPI1.components.dl import create_led_bulb
+from RPI1.components.db import run_db
 from mqtt.publisher import MQTTPublisher
 
 try:
     import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BCM)
-except ImportError:
+except (ImportError, RuntimeError):
     print("RPi.GPIO not available, running in simulation mode")
 
 
 # Simple command listener for PI1
 command_mqtt_client = None
+buzzer_actuator = None
 
 def on_connect_commands(client, userdata, flags, rc):
     if rc == 0:
@@ -31,11 +38,21 @@ def on_connect_commands(client, userdata, flags, rc):
         print("✓ PI1: Subscribed to commands/PI1/# and commands/all/#")
 
 def on_message_commands(client, userdata, msg):
+    global buzzer_actuator
     try:
         topic = msg.topic
         payload = json.loads(msg.payload.decode())
         
         print(f"PI1 Command received: {topic}")
+        
+        # Trigger buzzer when server announces active alarm
+        if "alarm_triggered" in topic and buzzer_actuator:
+            threading.Thread(
+                target=buzzer_actuator.ring,
+                kwargs={"times": 3},
+                daemon=True
+            ).start()
+            print("🔔 PI1: Alarm triggered -> buzzer activated")
         
         # Handle security commands
         if "security_armed" in topic or "alarm_cleared" in topic:
@@ -128,10 +145,16 @@ if __name__ == "__main__":
         
         # Initialize Buzzer
         if 'DB' in settings:
-            buzzer = Buzzer(settings['DB']['pin'])
+            buzzer = Buzzer(settings['DB']['pin'], mqtt_publisher=mqtt_publisher)
+            buzzer_actuator = buzzer
             print("✓ Buzzer initialized")
         
         print("\n Starting Sensors...")
+        
+        # Buzzer Simulator (if enabled)
+        if 'DB' in settings:
+            run_db(settings['DB'], threads, stop_event, mqtt_publisher)
+            print("✓ DB Buzzer component started")
         
         # Distance Sensor (for motion direction)
         if 'DUS1' in settings:
