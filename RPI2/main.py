@@ -1,8 +1,13 @@
 import threading
 import time
 import sys
+import os
 import paho.mqtt.client as mqtt
 import json
+
+# Allow running as script: python RPI2/main.py
+if __package__ is None or __package__ == "":
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from RPI2.settings.settings import load_settings
 from RPI2.components.ds2 import run_ds2
@@ -17,7 +22,7 @@ from mqtt.publisher import MQTTPublisher
 try:
     import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BCM)
-except ImportError:
+except (ImportError, RuntimeError):
     print("RPi.GPIO not available, running in simulation mode")
 
 

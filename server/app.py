@@ -28,6 +28,7 @@ write_api = None
 data_mqtt_client = None  # Receives sensor data
 command_mqtt_client = None  # Sends commands to RPIs
 mqtt_connected = False
+alarm_command_sent = False
 
 # Device tracking
 device_last_seen = {'PI1': None, 'PI2': None, 'PI3': None}
@@ -218,6 +219,11 @@ def handle_sensor_data(payload):
                 system_state.trigger_alarm(f"⚠️ Saint George is in dangerous - High acceleration detected ({sensor_type}={value:.2f}g)")
                 print(f"⚠️ ALARM: GSG detected dangerous movement on {device_id}: {sensor_type}={value:.2f}g")
         
+        # Buzzer activation events
+        elif sensor_type == 'buzzer' and value == 1:
+            print(f"🔔 BUZZER ACTIVATED on {device_id}")
+            # Buzzer activation is tracked automatically by InfluxDB write below
+        
         # Create InfluxDB point
         point = Point(sensor_type) \
             .tag("device_id", device_id) \
@@ -315,6 +321,7 @@ def send_command(device_id, command, data=None):
 
 def monitor_system_state():
     """Background thread to monitor state and trigger alarms"""
+    global alarm_command_sent
     print("State monitor started")
     
     while True:
@@ -322,7 +329,20 @@ def monitor_system_state():
             # Check for door open too long
             door_id, duration = system_state.check_door_alarms()
             if door_id:
-                system_state.trigger_alarm(f"{door_id} open for {duration:.0f}s (unlocked)")
+                system_state.trigger_alarm(
+                    f"{door_id} open for {duration:.0f}s (unlocked)",
+                    source='door_timeout',
+                    metadata={'door_id': door_id}
+                )
+
+            # Broadcast alarm activation exactly once per alarm cycle
+            if system_state.alarm_active and not alarm_command_sent:
+                send_command("all", "alarm_triggered", {"reason": system_state.alarm_reason or "Alarm active"})
+                alarm_command_sent = True
+
+            # Reset one-shot flag after alarm is cleared
+            if not system_state.alarm_active and alarm_command_sent:
+                alarm_command_sent = False
             
             if system_state.timer_expired:
                 send_command("PI2", "timer_expired", {})

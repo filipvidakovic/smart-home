@@ -30,14 +30,18 @@
         "read_interval": 2,
         "location": "Master Bedroom"
     },
-    "IR": {
+    "BRGB": {
         "simulated": true,
-        "pin": 3
+        "red_pin": 17,
+        "green_pin": 27,
+        "blue_pin": 22,
+        "update_interval": 1
     },
     "IR": {
         "simulated": true,
         "tx_pin": 23,
-        "rx_pin": 24
+        "rx_pin": 24,
+        "auto_demo": true
     },
     "LCD": {
         "simulated": true,
