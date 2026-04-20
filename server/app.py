@@ -329,7 +329,11 @@ def monitor_system_state():
             # Check for door open too long
             door_id, duration = system_state.check_door_alarms()
             if door_id:
-                system_state.trigger_alarm(f"{door_id} open for {duration:.0f}s (unlocked)")
+                system_state.trigger_alarm(
+                    f"{door_id} open for {duration:.0f}s (unlocked)",
+                    source='door_timeout',
+                    metadata={'door_id': door_id}
+                )
 
             # Broadcast alarm activation exactly once per alarm cycle
             if system_state.alarm_active and not alarm_command_sent:

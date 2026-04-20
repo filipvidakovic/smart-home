@@ -26,6 +26,8 @@ class SystemState:
         self.security_armed = False
         self.arming_countdown = None
         self.alarm_reason = None
+        self.alarm_source = None
+        self.alarm_metadata = {}
         
         # Door states
         self.door_states = {
@@ -174,6 +176,15 @@ class SystemState:
                 self.door_states[door_id]['open_since'] = None
                 print(f"🚪 {door_id}: CLOSED")
                 self.trigger_callbacks('door_closed', {'door_id': door_id})
+
+                # Auto-clear only door-timeout alarm when that same door changes state
+                if (
+                    self.alarm_active
+                    and self.alarm_source == 'door_timeout'
+                    and self.alarm_metadata.get('door_id') == door_id
+                ):
+                    print(f"✅ {door_id} state changed -> clearing door-timeout alarm")
+                    self.clear_alarm()
     
     def check_door_alarms(self):
         """Check if any door open too long"""
@@ -227,12 +238,14 @@ class SystemState:
     
     # ============ ALARM SYSTEM ============
     
-    def trigger_alarm(self, reason: str):
+    def trigger_alarm(self, reason: str, source: str = 'generic', metadata: Optional[Dict] = None):
         """Trigger alarm"""
         with self.lock:
             if not self.alarm_active:
                 self.alarm_active = True
                 self.alarm_reason = reason
+                self.alarm_source = source
+                self.alarm_metadata = metadata or {}
                 print(f"ALARM TRIGGERED: {reason}")
                 self.trigger_callbacks('alarm_triggered', {'reason': reason})
     
@@ -242,6 +255,8 @@ class SystemState:
             if self.alarm_active:
                 self.alarm_active = False
                 self.alarm_reason = None
+                self.alarm_source = None
+                self.alarm_metadata = {}
                 print("Alarm cleared")
                 self.trigger_callbacks('alarm_cleared', None)
     
@@ -328,6 +343,7 @@ class SystemState:
                 'security_armed': self.security_armed,
                 'alarm_active': self.alarm_active,
                 'alarm_reason': self.alarm_reason,
+                'alarm_source': self.alarm_source,
                 'door_states': self.door_states.copy(),
                 'led_states': self.led_states.copy(),
                 'timer': timer_state,
