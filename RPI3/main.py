@@ -26,6 +26,49 @@ except Exception as e:
     print(f"GPIO setup warning: {e}")
 
 
+BRGB_COLOR_TO_INDEX = {
+    'off': 0,
+    'red': 1,
+    'green': 2,
+    'blue': 3,
+    'yellow': 4,
+    'cyan': 5,
+    'magenta': 6,
+    'white': 7,
+    'orange': 8,
+    'purple': 9,
+    'pink': 10
+}
+
+
+def publish_brgb_state(rgb_lamp, mqtt_publisher, stop_event, interval=1.0):
+    """Continuously publish BRGB state so backend/frontend can track simulator changes."""
+    print("🌈 BRGB state publisher started")
+    last_color = None
+
+    while not stop_event.is_set():
+        try:
+            color = rgb_lamp.get_current_color() if rgb_lamp else 'off'
+            if color != last_color:
+                mqtt_publisher.publish_reading_now(
+                    sensor_type='brgb_color',
+                    value=BRGB_COLOR_TO_INDEX.get(color, 0),
+                    simulated=True,
+                    sensor_id='BRGB'
+                )
+                mqtt_publisher.publish_reading_now(
+                    sensor_type='brgb_power',
+                    value=0 if color == 'off' else 1,
+                    simulated=True,
+                    sensor_id='BRGB'
+                )
+                last_color = color
+        except Exception as e:
+            print(f"⚠️ BRGB state publish error: {e}")
+
+        time.sleep(interval)
+
+
 def cleanup_resources(mqtt_publisher, command_listener=None):
     print("\nCleaning up resources...")
     
@@ -68,6 +111,7 @@ if __name__ == "__main__":
     dht1_sensor = None
     dht2_sensor = None
     dpir3_sensor = None
+    brgb_state_thread = None
     
     # Create a mutable wrapper for LCD controller (can be updated later)
     class LCDWrapper:
@@ -146,6 +190,16 @@ if __name__ == "__main__":
         if 'IR' in settings:
             ir_remote = run_ir(settings['IR'], command_listener, brgb_lamp=rgb_lamp, threads=threads, stop_event=stop_event)
             print("✓ IR Remote initialized")
+
+        if rgb_lamp and mqtt_publisher:
+            brgb_state_thread = threading.Thread(
+                target=publish_brgb_state,
+                args=(rgb_lamp, mqtt_publisher, stop_event, 1.0),
+                daemon=True
+            )
+            brgb_state_thread.start()
+            threads.append(brgb_state_thread)
+            print("✓ BRGB state sync publisher started")
 
         print("\nInitializing LCD Display...")
         if 'LCD' in settings:

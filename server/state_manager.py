@@ -47,6 +47,14 @@ class SystemState:
             'DL1': {'on': False, 'last_changed': None},
             'DL2': {'on': False, 'last_changed': None}
         }
+
+        # BRGB lamp state (PI3)
+        self.brgb_state = {
+            'on': False,
+            'color': 'off',
+            'color_index': 0,
+            'last_changed': None
+        }
         
         # Callbacks for state changes
         self.callbacks = {}
@@ -151,6 +159,28 @@ class SystemState:
                 self.led_states[led_id]['last_changed'] = time.time()
                 print(f"💡 {led_id}: {'ON' if is_on else 'OFF'}")
                 self.trigger_callbacks('led_state_changed', {'led_id': led_id, 'on': is_on})
+
+    def update_brgb_state(self, *, on: Optional[bool] = None, color: Optional[str] = None, color_index: Optional[int] = None):
+        """Update BRGB lamp state."""
+        with self.lock:
+            changed = False
+
+            if on is not None and self.brgb_state['on'] != on:
+                self.brgb_state['on'] = on
+                changed = True
+
+            if color is not None and self.brgb_state['color'] != color:
+                self.brgb_state['color'] = color
+                changed = True
+
+            if color_index is not None and self.brgb_state['color_index'] != color_index:
+                self.brgb_state['color_index'] = color_index
+                changed = True
+
+            if changed:
+                self.brgb_state['last_changed'] = time.time()
+                print(f"🌈 BRGB: {'ON' if self.brgb_state['on'] else 'OFF'} - {self.brgb_state['color'].upper()}")
+                self.trigger_callbacks('brgb_state_changed', self.brgb_state.copy())
     
     
     # ============ DOOR MANAGEMENT ============
@@ -346,6 +376,7 @@ class SystemState:
                 'alarm_source': self.alarm_source,
                 'door_states': self.door_states.copy(),
                 'led_states': self.led_states.copy(),
+                'brgb_state': self.brgb_state.copy(),
                 'timer': timer_state,
                 'timer_seconds': timer_state['seconds'],
                 'timer_running': timer_state['running'],

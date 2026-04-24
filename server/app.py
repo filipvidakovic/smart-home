@@ -30,6 +30,20 @@ command_mqtt_client = None  # Sends commands to RPIs
 mqtt_connected = False
 alarm_command_sent = False
 
+BRGB_COLOR_INDEX_TO_NAME = {
+    0: 'off',
+    1: 'red',
+    2: 'green',
+    3: 'blue',
+    4: 'yellow',
+    5: 'cyan',
+    6: 'magenta',
+    7: 'white',
+    8: 'orange',
+    9: 'purple',
+    10: 'pink'
+}
+
 # Device tracking
 device_last_seen = {'PI1': None, 'PI2': None, 'PI3': None}
 device_sensors = {
@@ -51,7 +65,9 @@ device_sensors = {
         'humidity_bedroom': {'type': 'humidity', 'last_value': None, 'last_reading': None},
         'temperature_master': {'type': 'temperature', 'last_value': None, 'last_reading': None},
         'humidity_master': {'type': 'humidity', 'last_value': None, 'last_reading': None},
-        'motion': {'type': 'motion', 'last_value': None, 'last_reading': None}
+        'motion': {'type': 'motion', 'last_value': None, 'last_reading': None},
+        'brgb_power': {'type': 'brgb_power', 'last_value': None, 'last_reading': None},
+        'brgb_color': {'type': 'brgb_color', 'last_value': None, 'last_reading': None}
     }
 }
 
@@ -223,6 +239,18 @@ def handle_sensor_data(payload):
         elif sensor_type == 'buzzer' and value == 1:
             print(f"🔔 BUZZER ACTIVATED on {device_id}")
             # Buzzer activation is tracked automatically by InfluxDB write below
+
+        # BRGB state synchronization for frontend
+        elif sensor_type == 'brgb_power' and device_id == 'PI3':
+            system_state.update_brgb_state(on=bool(int(value)))
+        elif sensor_type == 'brgb_color' and device_id == 'PI3':
+            color_index = int(value)
+            color_name = BRGB_COLOR_INDEX_TO_NAME.get(color_index, 'off')
+            system_state.update_brgb_state(
+                on=color_name != 'off',
+                color=color_name,
+                color_index=color_index
+            )
         
         # Create InfluxDB point
         point = Point(sensor_type) \
