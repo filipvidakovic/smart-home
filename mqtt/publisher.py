@@ -32,6 +32,8 @@ class MQTTPublisher:
             'door': [],
             'button': [],
             'buzzer': [],
+            'brgb_power': [],
+            'brgb_color': [],
             'accel_x': [],
             'accel_y': [],
             'accel_z': [],
@@ -47,6 +49,8 @@ class MQTTPublisher:
             'door': time.time(),
             'button': time.time(),
             'buzzer': time.time(),
+            'brgb_power': time.time(),
+            'brgb_color': time.time(),
             'accel_x': time.time(),
             'accel_y': time.time(),
             'accel_z': time.time(),
@@ -143,6 +147,39 @@ class MQTTPublisher:
             'sensor_id': sensor_id
         }
         self.message_queue.put(reading)
+
+    def publish_reading_now(self, sensor_type: str, value: Any, simulated: bool, sensor_id: str = None):
+        """Publish a single reading immediately using the same batch payload shape."""
+        if not self.connected:
+            return False
+
+        reading = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'device_id': self.device_info['pi_id'],
+            'device_name': self.device_info['device_name'],
+            'location': self.device_info['location'],
+            'sensor_type': sensor_type,
+            'value': value,
+            'simulated': simulated,
+            'sensor_id': sensor_id
+        }
+
+        topic = self.topics.get(sensor_type, f"sensors/{sensor_type}")
+        payload = json.dumps({
+            'batch_size': 1,
+            'readings': [reading]
+        })
+
+        try:
+            result = self.client.publish(topic, payload, qos=1)
+            if result.rc == mqtt.MQTT_ERR_SUCCESS:
+                print(f"✓ MQTT: Published 1 {sensor_type} reading → {topic}")
+                return True
+            print(f"✗ MQTT: Immediate publish failed for {sensor_type} (rc={result.rc})")
+        except Exception as e:
+            print(f"✗ MQTT: Failed to publish immediate reading - {e}")
+
+        return False
     
     def _process_batches(self):
         """Daemon thread that processes batches"""
